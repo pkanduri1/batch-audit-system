@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Audit System Task Completion",
+  "description": "Triggers when tasks are completed in the batch audit system spec",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      ".kiro/specs/batch-audit-system/tasks.md"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A task has been updated in the batch audit system tasks.md file. Please:\n1. Review what task was completed\n2. Check if any code changes need to be committed\n3. Run any necessary tests\n4. Update documentation if needed\n5. Commit and push changes with an appropriate message"
+  }
+}

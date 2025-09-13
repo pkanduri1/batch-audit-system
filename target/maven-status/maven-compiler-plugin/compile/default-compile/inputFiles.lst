@@ -1,1 +1,16 @@
+/Users/pavankanduri/kiro-ws/audit-plan/src/main/java/com/company/audit/enums/AuditStatus.java
+/Users/pavankanduri/kiro-ws/audit-plan/src/main/java/com/company/audit/model/dto/DataDiscrepancy.java
+/Users/pavankanduri/kiro-ws/audit-plan/src/main/java/com/company/audit/exception/AuditPersistenceException.java
+/Users/pavankanduri/kiro-ws/audit-plan/src/main/java/com/company/audit/service/AuditService.java
+/Users/pavankanduri/kiro-ws/audit-plan/src/main/java/com/company/audit/service/CorrelationIdManagerImpl.java
+/Users/pavankanduri/kiro-ws/audit-plan/src/main/java/com/company/audit/enums/CheckpointStage.java
+/Users/pavankanduri/kiro-ws/audit-plan/src/main/java/com/company/audit/service/CorrelationIdManager.java
 /Users/pavankanduri/kiro-ws/audit-plan/src/main/java/com/company/audit/BatchAuditApplication.java
+/Users/pavankanduri/kiro-ws/audit-plan/src/main/java/com/company/audit/repository/AuditRepository.java
+/Users/pavankanduri/kiro-ws/audit-plan/src/main/java/com/company/audit/controller/AuditDashboardController.java
+/Users/pavankanduri/kiro-ws/audit-plan/src/main/java/com/company/audit/config/SwaggerConfig.java
+/Users/pavankanduri/kiro-ws/audit-plan/src/main/java/com/company/audit/model/dto/PagedResponse.java
+/Users/pavankanduri/kiro-ws/audit-plan/src/main/java/com/company/audit/model/AuditDetails.java
+/Users/pavankanduri/kiro-ws/audit-plan/src/main/java/com/company/audit/service/AuditServiceImpl.java
+/Users/pavankanduri/kiro-ws/audit-plan/src/main/java/com/company/audit/model/dto/AuditStatistics.java
+/Users/pavankanduri/kiro-ws/audit-plan/src/main/java/com/company/audit/model/AuditEvent.java

@@ -1,0 +1,66 @@
+spring:
+  application:
+    name: batch-audit-system-integration-test
+  
+  # Oracle database configuration for integration testing
+  datasource:
+    url: jdbc:oracle:thin:@//localhost:1521/ORCLPDB1
+    username: ${ORACLE_TEST_USER:cm3int}
+    password: ${ORACLE_TEST_PASSWORD:cm3int}
+    driver-class-name: oracle.jdbc.OracleDriver
+    
+    # HikariCP Connection Pool Configuration for Integration Tests
+    hikari:
+      pool-name: IntegrationTestAuditHikariPool
+      maximum-pool-size: 5
+      minimum-idle: 2
+      idle-timeout: 300000
+      max-lifetime: 1800000
+      connection-timeout: 10000
+      auto-commit: false
+  
+  # JdbcTemplate Configuration for Integration Tests
+  jdbc:
+    template:
+      fetch-size: 100
+      max-rows: 5000
+      query-timeout: 30
+  
+  # Enable Liquibase for integration tests with test context
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    contexts: test
+    drop-first: false
+    default-schema: ${ORACLE_TEST_USER:cm3int}
+
+# SpringDoc OpenAPI Configuration for Integration Tests
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+# Audit System Configuration for Integration Tests
+audit:
+  database:
+    batch-size: 100
+    connection-pool-size: 5
+  retention:
+    days: 30
+  reconciliation:
+    auto-generate: false
+    schedule: "-"
+  dashboard:
+    page-size: 50
+    max-export-records: 5000
+
+# Integration test specific logging
+logging:
+  level:
+    com.company.audit: DEBUG
+    org.springframework.jdbc: DEBUG
+    liquibase: INFO
+    oracle.jdbc: WARN
+    org.springframework: WARN
+    org.springframework.test: DEBUG

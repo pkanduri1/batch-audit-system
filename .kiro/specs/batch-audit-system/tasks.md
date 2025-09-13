@@ -95,139 +95,160 @@
   - Use Test_ prefixed tables for any database testing scenarios (e.g., Test_PIPELINE_AUDIT_LOG)
   - _Requirements: 2.2, 8.2_
 
-- [ ] 16. Create AuditDetails model class
+- [x] 16. Create AuditDetails model class
   - Create AuditDetails POJO for JSON metadata
   - Add fields for file metadata (size, hash)
   - Add fields for SQL loader statistics (rows read/loaded/rejected)
   - _Requirements: 2.4, 3.1, 3.2_
 
-- [ ] 17. Add more AuditDetails fields
+- [x] 17. Add more AuditDetails fields
   - Add fields for record counts and control totals
   - Add fields for business rule input/output data
   - Add proper getters and setters
   - _Requirements: 3.3, 3.4, 4.2, 4.3_
 
-- [ ] 18. Add JSON serialization to AuditDetails
+- [x] 18. Add JSON serialization to AuditDetails
   - Add Jackson annotations for JSON conversion compatible with Spring Boot 3.4+ Jackson version
   - Configure proper JSON include/exclude policies using Jackson 2.15+ features
   - Add builder pattern for easy construction with Java 17+ record support if applicable
   - _Requirements: 2.4_
 
-- [ ] 19. Create AuditDetails unit tests
+- [x] 19. Create AuditDetails unit tests
   - Test JSON serialization and deserialization with Jackson 2.15+ and Spring Boot 3.4+
   - Test builder pattern functionality with Java 17+ language features
   - Test field validation and constraints ensuring Spring Boot 3.4+ compatibility
   - Use Test_ prefixed tables for any database testing scenarios
   - _Requirements: 2.4_
 
-- [ ] 20. Create basic AuditRepository class with JdbcTemplate
+- [x] 20. Create basic AuditRepository class with JdbcTemplate
   - Create @Repository class with JdbcTemplate dependency injection using Spring Boot 3.4+ auto-configuration
   - Add basic save() method for inserting audit events with Java 17+ features
   - Add findById() method for retrieving single audit event using Optional return types
+  - Use Test_ prefixed tables for any database testing scenarios (e.g., Test_PIPELINE_AUDIT_LOG)
+  - Make sure all the concerned hooks are run
   - _Requirements: 2.1, 2.2_
 
-- [ ] 21. Add correlation ID query methods
+- [x] 21. Add correlation ID query methods
   - Add findByCorrelationIdOrderByEventTimestamp method using SQL queries
   - Add countByCorrelationId method with JdbcTemplate
   - Implement proper SQL queries with parameter binding
+  - Use Test_ prefixed tables for any database testing scenarios (e.g., Test_PIPELINE_AUDIT_LOG)
+  - Make sure all the concerned hooks are run
   - _Requirements: 1.2, 6.1_
 
-- [ ] 22. Add source system and module query methods
+- [x] 22. Add source system and module query methods
   - Add findBySourceSystemAndCheckpointStage method with SQL
   - Add findByModuleNameAndStatus method with SQL
   - Implement proper WHERE clause filtering with parameters
+  - Use Test_ prefixed tables for any database testing scenarios (e.g., Test_PIPELINE_AUDIT_LOG)
+  - Make sure all the concerned hooks are run
   - _Requirements: 1.3, 6.2, 6.3_
 
-- [ ] 23. Add date range and statistics query methods
+- [x] 23. Add date range and statistics query methods
   - Add findByEventTimestampBetween method with SQL date filtering
   - Add countByCorrelationIdAndStatus method with SQL COUNT query
   - Add pagination support using LIMIT and OFFSET
+  - Use Test_ prefixed tables for any database testing scenarios (e.g., Test_PIPELINE_AUDIT_LOG)
+  - Make sure all the concerned hooks are run
   - _Requirements: 6.1, 6.4, 5.2_
 
-- [ ] 24. Create AuditRepository integration tests with JdbcTemplate
+- [x] 24. Create AuditRepository integration tests with JdbcTemplate
   - Set up @JdbcTest configuration with Liquibase for Spring Boot 3.4+ and Java 17+
   - Write tests for basic CRUD operations using TestJdbcTemplate with JUnit 5 and Spring Boot 3.4+ test features
   - Test correlation ID and source system queries with Java 17+ text blocks for SQL readability
   - Verify Liquibase schema creation works correctly with Spring Boot 3.4+ auto-configuration
   - Use Test_ prefixed tables (e.g., Test_PIPELINE_AUDIT_LOG) for all integration testing scenarios
+  - Make sure all the concerned hooks are run
   - _Requirements: 2.1, 2.2, 6.1, 6.2_
 
-- [ ] 25. Test advanced repository query methods
+- [x] 25. Test advanced repository query methods
   - Test date range queries and pagination
   - Test count queries and statistics methods
   - Test query performance with sample data
+  - Make sure all the concerned hooks are run
   - _Requirements: 6.3, 6.4, 5.2_
 
-- [ ] 26. Create CorrelationIdManager interface
+- [x] 26. Create CorrelationIdManager interface
   - Define interface with generateCorrelationId method
   - Add getCurrentCorrelationId and setCorrelationId methods
   - Add clearCorrelationId method
+  - Make sure all the concerned hooks are run
   - _Requirements: 1.2, 2.3_
 
-- [ ] 27. Implement CorrelationIdManager with ThreadLocal
+- [x] 27. Implement CorrelationIdManager with ThreadLocal
   - Create implementation using ThreadLocal storage with Java 17+ enhanced features
   - Implement UUID generation with proper formatting using Java 17+ UUID improvements
   - Add thread safety and cleanup logic with virtual threads compatibility for future Java versions
+  - Make sure all the concerned hooks are run
   - _Requirements: 1.2, 2.3_
 
-- [ ] 28. Create CorrelationIdManager unit tests
+- [x] 28. Create CorrelationIdManager unit tests
   - Test UUID generation and uniqueness with Java 17+ UUID improvements
   - Test thread-local storage and isolation ensuring Spring Boot 3.4+ compatibility
   - Test cleanup and memory leak prevention with virtual threads compatibility
   - Use Test_ prefixed tables for any database testing scenarios
+  - Make sure all the concerned hooks are run
   - _Requirements: 1.2, 1.4_
 
-- [ ] 29. Create basic AuditService interface
+- [x] 29. Create basic AuditService interface
   - Define AuditService interface with core audit logging methods
   - Add method signatures for all checkpoint logging operations
   - Include proper JavaDoc documentation
+  - Make sure all the concerned hooks are run
   - _Requirements: 2.1, 7.1, 7.2, 7.3, 7.4_
 
-- [ ] 30. Implement basic AuditService with Oracle persistence
+- [x] 30. Implement basic AuditService with Oracle persistence
   - Create AuditServiceImpl with Oracle database integration using Spring Boot 3.4+ features
   - Implement core audit event creation and persistence logic with Java 17+ pattern matching and records where applicable
   - Add basic validation and error handling using Spring Boot 3.4+ validation framework
+  - Make sure all the concerned hooks are run
   - _Requirements: 2.1, 2.2, 2.5, 8.1_
 
-- [ ] 31. Add checkpoint-specific logging methods
+- [x] 31. Add checkpoint-specific logging methods
   - Implement logFileTransfer method for Checkpoint 1 using Java 17+ enhanced switch expressions
   - Implement logSqlLoaderOperation method for Checkpoint 2 with improved error handling
   - Add proper Oracle transaction management using Spring Boot 3.4+ transaction features
+  - Make sure all the concerned hooks are run
   - _Requirements: 7.1, 7.2, 4.1, 4.2_
 
-- [ ] 32. Complete remaining checkpoint methods
+- [x] 32. Complete remaining checkpoint methods
   - Implement logBusinessRuleApplication method for Checkpoint 3
   - Implement logFileGeneration method for Checkpoint 4
   - Add comprehensive error handling for Oracle operations
+  - Make sure all the concerned hooks are run
   - _Requirements: 7.3, 7.4, 4.3, 4.4_
 
-- [ ] 33. Create AuditService unit tests
+- [x] 33. Create AuditService unit tests
   - Write unit tests with mocked Oracle repository using Spring Boot 3.4+ test features
   - Test all checkpoint logging methods with Java 17+ language enhancements
   - Test error handling and validation scenarios ensuring Spring Boot 3.4+ compatibility
   - Use Test_ prefixed tables for any database testing scenarios
+  - Make sure all the concerned hooks are run
   - _Requirements: 2.1, 2.2, 7.5_
 
-- [ ] 34. Create Swagger configuration
+- [x] 34. Create Swagger configuration
   - Create SwaggerConfig class with @Configuration for SpringDoc OpenAPI v2 and Spring Boot 3.4+
   - Configure OpenAPI 3.0 documentation with title, description, version using SpringDoc v2 annotations
   - Set up API servers for development and production with Spring Boot 3.4+ server configuration
   - Add contact information and API grouping using SpringDoc v2 features
+  - Make sure all the concerned hooks are run
   - _Requirements: 6.7_
 
-- [ ] 35. Create REST API controller structure with Swagger annotations
+- [x] 35. Create REST API controller structure with Swagger annotations
   - Create AuditDashboardController class with @RestController for Spring Boot 3.4+
   - Add @RequestMapping for /api/audit base path using Spring Boot 3.4+ path matching
   - Add @Tag annotation for SpringDoc OpenAPI v2 API grouping
   - Set up basic Spring MVC configuration compatible with Spring Boot 3.4+ and Java 17+
+  - Make sure all the concerned hooks are run
   - _Requirements: 6.1, 6.6, 6.7_
 
-- [ ] 36. Implement audit events REST endpoint with Swagger documentation
+- [x] 36. Implement audit events REST endpoint with Swagger documentation
   - Create GET /api/audit/events endpoint with pagination using Spring Boot 3.4+ data features
   - Add @Operation annotation with summary and description for SpringDoc OpenAPI v2
   - Add @Parameter annotations for query parameters with OpenAPI 3.0 schema definitions
   - Add @ApiResponse annotations for different response codes with proper media types
   - Return JSON responses with proper HTTP status codes using Spring Boot 3.4+ ResponseEntity enhancements
+  - Make sure all the concerned hooks are run
   - _Requirements: 6.1, 6.2, 6.6, 6.7_
 
 - [ ] 37. Add reconciliation REST endpoints with Swagger documentation
@@ -235,9 +256,10 @@
   - Implement GET /api/audit/reconciliation/reports with filtering using Spring Boot 3.4+ request parameter binding
   - Add @Operation and @Parameter annotations for SpringDoc OpenAPI v2 documentation
   - Return reconciliation data in JSON format with Jackson 2.15+ serialization features
+  - Make sure all the concerned hooks are run
   - _Requirements: 5.1, 5.2, 5.6, 6.7_
 
-- [ ] 38. Create statistics and discrepancy REST endpoints with Swagger
+- [-] 38. Create statistics and discrepancy REST endpoints with Swagger
   - Implement GET /api/audit/statistics endpoint with Spring Boot 3.4+ metrics integration
   - Create GET /api/audit/discrepancies endpoint with filters using Spring Boot 3.4+ filtering capabilities
   - Add comprehensive SpringDoc OpenAPI v2 annotations for all parameters with OpenAPI 3.0 schemas
@@ -249,6 +271,7 @@
   - Create ReconciliationReportDTO for report endpoints with Java 17+ sealed classes if applicable
   - Add @Schema annotations for SpringDoc OpenAPI v2 documentation with OpenAPI 3.0 schema definitions
   - Add proper JSON serialization annotations compatible with Jackson 2.15+ and Spring Boot 3.4+
+  - Make sure all the concerned hooks are run
   - _Requirements: 6.1, 5.6, 6.6, 6.7_
 
 - [ ] 40. Create REST API integration tests including Swagger
@@ -257,6 +280,7 @@
   - Test pagination, filtering, and error scenarios with Spring Boot 3.4+ test utilities
   - Verify SpringDoc OpenAPI v2 Swagger UI accessibility and documentation generation
   - Use Test_ prefixed tables for any database testing scenarios
+  - Make sure all the concerned hooks are run
   - _Requirements: 6.1, 6.2, 6.4, 6.6, 6.7_
 
 - [ ] 41. Add Oracle-specific configuration
@@ -264,6 +288,7 @@
   - Add Oracle-specific JdbcTemplate properties for performance with Spring Boot 3.4+ auto-configuration
   - Configure transaction management for Oracle with JdbcTemplate using Spring Boot 3.4+ transaction features
   - Configure Liquibase for Oracle schema management compatible with Spring Boot 3.4+ and Java 17+
+  - Make sure all the concerned hooks are run
   - _Requirements: 2.2, 2.5_
 
 - [ ] 42. Create database integration tests with Oracle and Liquibase
@@ -272,12 +297,14 @@
   - Verify Liquibase schema creation and migrations with Spring Boot 3.4+ Liquibase integration
   - Test Oracle-specific features and SQL queries using Java 17+ text blocks for better SQL readability
   - Use Test_ prefixed tables (e.g., Test_PIPELINE_AUDIT_LOG) for all database integration testing
+  - Make sure all the concerned hooks are run
   - _Requirements: 2.2, 2.5, 6.1, 6.2_
 
 - [ ] 43. Implement comprehensive error handling
   - Create audit-specific exception classes using Java 17+ sealed classes where appropriate
   - Add global exception handler for REST API with SpringDoc OpenAPI v2 error documentation
   - Implement retry logic for Oracle connection issues with JdbcTemplate using Spring Boot 3.4+ retry mechanisms
+  - Make sure all the concerned hooks are run
   - _Requirements: 7.5, 8.4, 6.6, 6.7_
 
 - [ ] 44. Add API security configuration
@@ -285,6 +312,7 @@
   - Add authentication and authorization for audit APIs using Spring Security 6.x features
   - Implement role-based access control with Spring Boot 3.4+ security auto-configuration
   - Configure SpringDoc OpenAPI v2 Swagger UI security for protected endpoints with OAuth2/JWT integration
+  - Make sure all the concerned hooks are run
   - _Requirements: 8.3, 6.1, 6.7_
 
 - [ ] 45. Create end-to-end integration tests
@@ -294,4 +322,5 @@
   - Test Liquibase migrations in integration environment with Spring Boot 3.4+ Liquibase integration
   - Verify SpringDoc OpenAPI v2 Swagger UI functionality and API documentation generation
   - Use Test_ prefixed tables for all end-to-end integration testing scenarios
+  - Make sure all the concerned hooks are run
   - _Requirements: 1.1, 1.2, 2.5, 6.6, 6.7_

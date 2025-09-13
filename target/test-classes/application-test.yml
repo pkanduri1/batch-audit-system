@@ -2,17 +2,72 @@ spring:
   application:
     name: batch-audit-system-test
   
-  # Disable database auto-configuration for basic context test
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-      - org.springframework.boot.autoconfigure.liquibase.LiquibaseAutoConfiguration
+  # Use H2 in-memory database for testing
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+    
+    # HikariCP Connection Pool Configuration for Tests
+    hikari:
+      pool-name: TestAuditHikariPool
+      maximum-pool-size: 5
+      minimum-idle: 2
+      idle-timeout: 300000
+      max-lifetime: 1800000
+      connection-timeout: 10000
+      auto-commit: false
+  
+  # JdbcTemplate Configuration for Tests
+  jdbc:
+    template:
+      fetch-size: 50
+      max-rows: 1000
+      query-timeout: 15
+  
+  # JPA Configuration for Tests
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+        jdbc:
+          batch_size: 50
+          time_zone: UTC
+    show-sql: true
+  
+  # Disable Liquibase for unit tests
+  liquibase:
+    enabled: false
 
-# Disable Liquibase for test
-spring.liquibase.enabled: false
+# SpringDoc OpenAPI Configuration for Tests
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+# Audit System Configuration for Tests
+audit:
+  database:
+    batch-size: 50
+    connection-pool-size: 5
+  retention:
+    days: 30
+  reconciliation:
+    auto-generate: false
+    schedule: "-"
+  dashboard:
+    page-size: 20
+    max-export-records: 1000
 
 # Test-specific logging
 logging:
   level:
     com.company.audit: DEBUG
+    org.springframework.jdbc: DEBUG
+    liquibase: INFO
     org.springframework: WARN

@@ -2,12 +2,12 @@ spring:
   application:
     name: batch-audit-system-test
   
-  # Oracle Database Configuration for Testing
+  # Use H2 in-memory database for testing
   datasource:
-    url: jdbc:oracle:thin:@//localhost:1521/ORCLPDB1
-    username: cm3int_test
-    password: test_password
-    driver-class-name: oracle.jdbc.OracleDriver
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
     
     # HikariCP Connection Pool Configuration for Tests
     hikari:
@@ -17,7 +17,6 @@ spring:
       idle-timeout: 300000
       max-lifetime: 1800000
       connection-timeout: 10000
-      connection-test-query: SELECT 1 FROM DUAL
       auto-commit: false
   
   # JdbcTemplate Configuration for Tests
@@ -30,24 +29,19 @@ spring:
   # JPA Configuration for Tests
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: create-drop
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.Oracle19cDialect
+        dialect: org.hibernate.dialect.H2Dialect
         format_sql: true
         jdbc:
           batch_size: 50
           time_zone: UTC
     show-sql: true
   
-  # Liquibase Configuration for Tests
+  # Disable Liquibase for unit tests
   liquibase:
-    change-log: classpath:db/changelog/db.changelog-master.xml
-    enabled: true
-    drop-first: false
-    contexts: test
-    default-schema: cm3int_test
-    liquibase-schema: cm3int_test
+    enabled: false
 
 # SpringDoc OpenAPI Configuration for Tests
 springdoc:

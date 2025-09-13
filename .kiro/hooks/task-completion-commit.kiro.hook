@@ -6,7 +6,9 @@
   "when": {
     "type": "fileEdited",
     "patterns": [
-      "tasks.md"
+      "tasks.md",
+      ".kiro/specs/*/tasks.md",
+      ".kiro/specs/batch-audit-system/tasks.md"
     ]
   },
   "then": {

@@ -471,6 +471,30 @@ public class AuditEvent {
         }
         
         /**
+         * Copies all fields from an existing AuditEvent instance
+         * @param auditEvent the AuditEvent to copy from
+         * @return this Builder instance for method chaining
+         */
+        public Builder from(AuditEvent auditEvent) {
+            if (auditEvent != null) {
+                this.auditId = auditEvent.auditId;
+                this.correlationId = auditEvent.correlationId;
+                this.sourceSystem = auditEvent.sourceSystem;
+                this.moduleName = auditEvent.moduleName;
+                this.processName = auditEvent.processName;
+                this.sourceEntity = auditEvent.sourceEntity;
+                this.destinationEntity = auditEvent.destinationEntity;
+                this.keyIdentifier = auditEvent.keyIdentifier;
+                this.checkpointStage = auditEvent.checkpointStage;
+                this.eventTimestamp = auditEvent.eventTimestamp;
+                this.status = auditEvent.status;
+                this.message = auditEvent.message;
+                this.detailsJson = auditEvent.detailsJson;
+            }
+            return this;
+        }
+        
+        /**
          * Builds and returns a new AuditEvent instance with the configured values
          * @return a new AuditEvent instance
          */

@@ -2,7 +2,7 @@
 
 ## Current Implementation Status
 
-The Batch Audit System has completed its foundation phase (Tasks 1-15) and established a robust, production-ready architecture using Spring Boot 3.4+ and Oracle Database integration.
+The Batch Audit System has nearly completed its foundation phase (Tasks 1-16 complete, Task 17 in progress) and established a robust, production-ready architecture using Spring Boot 3.4+ and Oracle Database integration. The core data models are implemented with Task 17 requiring completion of additional AuditDetails fields.
 
 ## Implemented Components
 
@@ -67,6 +67,40 @@ public class AuditEvent {
     private String detailsJson;        // JSON metadata
     
     // Builder pattern, equals/hashCode, toString implemented
+}
+```
+
+#### AuditDetails Metadata Model
+```java
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class AuditDetails {
+    // File metadata (✅ Complete)
+    private Long fileSizeBytes;        // File size for integrity verification
+    private String fileHashSha256;     // SHA-256 hash for data validation
+    
+    // SQL loader statistics (✅ Complete)
+    private Long rowsRead;             // Records processed by SQL*Loader
+    private Long rowsLoaded;           // Successfully loaded records
+    private Long rowsRejected;         // Rejected records with errors
+    
+    // Record counts (🔄 Task 17 - Needs completion)
+    private Long recordCount;          // Total record count
+    private Long recordCountBefore;    // Records before transformation
+    private Long recordCountAfter;     // Records after transformation
+    
+    // Control totals (🔄 Task 17 - Needs completion)
+    private BigDecimal controlTotalDebits;   // Debit control totals
+    private BigDecimal controlTotalCredits;  // Credit control totals
+    private BigDecimal controlTotalAmount;   // Net control total
+    
+    // Business rule processing (🔄 Task 17 - Needs completion)
+    private Map<String, Object> ruleInput;   // Input data for rules
+    private Map<String, Object> ruleOutput;  // Output data from rules
+    private String ruleApplied;              // Rule name applied
+    private String entityIdentifier;         // Entity identifier
+    private String transformationDetails;    // Transformation details
+    
+    // Jackson JSON serialization, equals/hashCode implemented
 }
 ```
 
@@ -198,8 +232,13 @@ class AuditEventTest {
 
 ## Next Phase Architecture
 
-### Phase 2: Data Layer (Tasks 16-25)
-- **AuditDetails Model**: JSON metadata structure for audit events
+### Phase 1 Completion: AuditDetails Model (Task 17)
+- **AuditDetails Model**: 🔄 **In Progress** - Additional fields needed for complete JSON metadata structure
+- **Missing Fields**: Record count transformations, complete control totals, business rule processing fields
+- **Jackson Integration**: ✅ **Complete** - JSON serialization annotations implemented
+
+### Phase 2: Data Layer (Tasks 18-25)
+- **AuditDetails Testing**: Comprehensive test suite validation
 - **AuditRepository**: JdbcTemplate-based data access layer
 - **Query Methods**: Correlation ID, source system, and date range queries
 - **Integration Testing**: @JdbcTest with Oracle database validation
