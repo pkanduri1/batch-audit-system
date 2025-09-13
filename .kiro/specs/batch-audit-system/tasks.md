@@ -1,28 +1,31 @@
 # Implementation Plan
 
 - [x] 1. Create basic Maven project structure
-  - Set up Maven pom.xml with Spring Boot parent
-  - Add Spring Boot starter dependencies (web, jdbc, test)
-  - Add SpringDoc OpenAPI dependency for Swagger UI
+  - Set up Maven pom.xml with Spring Boot 3.4+ parent and Java 17+ target
+  - Add Spring Boot starter dependencies (web, jdbc, test) compatible with Spring Boot 3.4+
+  - Add SpringDoc OpenAPI v2 dependency for Swagger UI (compatible with Spring Boot 3.x)
+  - Configure Maven compiler plugin for Java 17+ source and target versions
   - _Requirements: 2.1, 6.7_
 
 - [x] 2. Add Oracle database dependencies
-  - Add Oracle JDBC driver dependency to pom.xml
-  - Add HikariCP connection pool dependency
-  - Add Liquibase dependency for database schema management
+  - Add Oracle JDBC driver dependency compatible with Spring Boot 3.4+
+  - Add HikariCP connection pool dependency (included by default in Spring Boot 3.4+)
+  - Add Liquibase dependency for database schema management compatible with Spring Boot 3.4+
+  - Ensure all dependencies support Java 17+ runtime
   - _Requirements: 2.2_
 
 - [x] 3. Create basic Spring Boot application class
-  - Create main application class with @SpringBootApplication
-  - Add basic application.yml configuration file
+  - Create main application class with @SpringBootApplication for Spring Boot 3.4+
+  - Add basic application.yml configuration file with Spring Boot 3.4+ property structure
+  - Configure Java 17+ specific JVM options if needed
   - _Requirements: 2.1_
 
 - [x] 4. Configure Oracle database connection properties
-  - Add Oracle database connection URL, username, password to application.yml
-  - Configure JdbcTemplate and DataSource properties for Oracle
-  - Configure HikariCP connection pool settings for Oracle
-  - Configure Liquibase properties for schema management
-  - Configure SpringDoc OpenAPI properties for Swagger UI
+  - Add Oracle database connection URL, username, password to application.yml using Spring Boot 3.4+ configuration format
+  - Configure JdbcTemplate and DataSource properties for Oracle with Spring Boot 3.4+ auto-configuration
+  - Configure HikariCP connection pool settings optimized for Java 17+ and Spring Boot 3.4+
+  - Configure Liquibase properties for schema management compatible with Spring Boot 3.4+
+  - Configure SpringDoc OpenAPI v2 properties for Swagger UI with Spring Boot 3.4+ integration
   - _Requirements: 2.2, 2.5, 6.7_
 
 - [x] 5. Create Oracle local development properties file
@@ -103,9 +106,9 @@
   - _Requirements: 3.3, 3.4, 4.2, 4.3_
 
 - [ ] 18. Add JSON serialization to AuditDetails
-  - Add Jackson annotations for JSON conversion
-  - Configure proper JSON include/exclude policies
-  - Add builder pattern for easy construction
+  - Add Jackson annotations for JSON conversion compatible with Spring Boot 3.4+ Jackson version
+  - Configure proper JSON include/exclude policies using Jackson 2.15+ features
+  - Add builder pattern for easy construction with Java 17+ record support if applicable
   - _Requirements: 2.4_
 
 - [ ] 19. Create AuditDetails unit tests
@@ -115,9 +118,9 @@
   - _Requirements: 2.4_
 
 - [ ] 20. Create basic AuditRepository class with JdbcTemplate
-  - Create @Repository class with JdbcTemplate dependency injection
-  - Add basic save() method for inserting audit events
-  - Add findById() method for retrieving single audit event
+  - Create @Repository class with JdbcTemplate dependency injection using Spring Boot 3.4+ auto-configuration
+  - Add basic save() method for inserting audit events with Java 17+ features
+  - Add findById() method for retrieving single audit event using Optional return types
   - _Requirements: 2.1, 2.2_
 
 - [ ] 21. Add correlation ID query methods
@@ -139,10 +142,10 @@
   - _Requirements: 6.1, 6.4, 5.2_
 
 - [ ] 24. Create AuditRepository integration tests with JdbcTemplate
-  - Set up @JdbcTest configuration with Liquibase
-  - Write tests for basic CRUD operations using TestJdbcTemplate
-  - Test correlation ID and source system queries
-  - Verify Liquibase schema creation works correctly
+  - Set up @JdbcTest configuration with Liquibase for Spring Boot 3.4+ and Java 17+
+  - Write tests for basic CRUD operations using TestJdbcTemplate with JUnit 5 and Spring Boot 3.4+ test features
+  - Test correlation ID and source system queries with Java 17+ text blocks for SQL readability
+  - Verify Liquibase schema creation works correctly with Spring Boot 3.4+ auto-configuration
   - _Requirements: 2.1, 2.2, 6.1, 6.2_
 
 - [ ] 25. Test advanced repository query methods
@@ -158,9 +161,9 @@
   - _Requirements: 1.2, 2.3_
 
 - [ ] 27. Implement CorrelationIdManager with ThreadLocal
-  - Create implementation using ThreadLocal storage
-  - Implement UUID generation with proper formatting
-  - Add thread safety and cleanup logic
+  - Create implementation using ThreadLocal storage with Java 17+ enhanced features
+  - Implement UUID generation with proper formatting using Java 17+ UUID improvements
+  - Add thread safety and cleanup logic with virtual threads compatibility for future Java versions
   - _Requirements: 1.2, 2.3_
 
 - [ ] 28. Create CorrelationIdManager unit tests
@@ -176,15 +179,15 @@
   - _Requirements: 2.1, 7.1, 7.2, 7.3, 7.4_
 
 - [ ] 30. Implement basic AuditService with Oracle persistence
-  - Create AuditServiceImpl with Oracle database integration
-  - Implement core audit event creation and persistence logic
-  - Add basic validation and error handling
+  - Create AuditServiceImpl with Oracle database integration using Spring Boot 3.4+ features
+  - Implement core audit event creation and persistence logic with Java 17+ pattern matching and records where applicable
+  - Add basic validation and error handling using Spring Boot 3.4+ validation framework
   - _Requirements: 2.1, 2.2, 2.5, 8.1_
 
 - [ ] 31. Add checkpoint-specific logging methods
-  - Implement logFileTransfer method for Checkpoint 1
-  - Implement logSqlLoaderOperation method for Checkpoint 2
-  - Add proper Oracle transaction management
+  - Implement logFileTransfer method for Checkpoint 1 using Java 17+ enhanced switch expressions
+  - Implement logSqlLoaderOperation method for Checkpoint 2 with improved error handling
+  - Add proper Oracle transaction management using Spring Boot 3.4+ transaction features
   - _Requirements: 7.1, 7.2, 4.1, 4.2_
 
 - [ ] 32. Complete remaining checkpoint methods
@@ -200,86 +203,86 @@
   - _Requirements: 2.1, 2.2, 7.5_
 
 - [ ] 34. Create Swagger configuration
-  - Create SwaggerConfig class with @Configuration
-  - Configure OpenAPI documentation with title, description, version
-  - Set up API servers for development and production
-  - Add contact information and API grouping
+  - Create SwaggerConfig class with @Configuration for SpringDoc OpenAPI v2 and Spring Boot 3.4+
+  - Configure OpenAPI 3.0 documentation with title, description, version using SpringDoc v2 annotations
+  - Set up API servers for development and production with Spring Boot 3.4+ server configuration
+  - Add contact information and API grouping using SpringDoc v2 features
   - _Requirements: 6.7_
 
 - [ ] 35. Create REST API controller structure with Swagger annotations
-  - Create AuditDashboardController class with @RestController
-  - Add @RequestMapping for /api/audit base path
-  - Add @Tag annotation for Swagger API grouping
-  - Set up basic Spring MVC configuration
+  - Create AuditDashboardController class with @RestController for Spring Boot 3.4+
+  - Add @RequestMapping for /api/audit base path using Spring Boot 3.4+ path matching
+  - Add @Tag annotation for SpringDoc OpenAPI v2 API grouping
+  - Set up basic Spring MVC configuration compatible with Spring Boot 3.4+ and Java 17+
   - _Requirements: 6.1, 6.6, 6.7_
 
 - [ ] 36. Implement audit events REST endpoint with Swagger documentation
-  - Create GET /api/audit/events endpoint with pagination
-  - Add @Operation annotation with summary and description
-  - Add @Parameter annotations for query parameters
-  - Add @ApiResponse annotations for different response codes
-  - Return JSON responses with proper HTTP status codes
+  - Create GET /api/audit/events endpoint with pagination using Spring Boot 3.4+ data features
+  - Add @Operation annotation with summary and description for SpringDoc OpenAPI v2
+  - Add @Parameter annotations for query parameters with OpenAPI 3.0 schema definitions
+  - Add @ApiResponse annotations for different response codes with proper media types
+  - Return JSON responses with proper HTTP status codes using Spring Boot 3.4+ ResponseEntity enhancements
   - _Requirements: 6.1, 6.2, 6.6, 6.7_
 
 - [ ] 37. Add reconciliation REST endpoints with Swagger documentation
-  - Create GET /api/audit/reconciliation/{correlationId} endpoint
-  - Implement GET /api/audit/reconciliation/reports with filtering
-  - Add @Operation and @Parameter annotations for Swagger
-  - Return reconciliation data in JSON format
+  - Create GET /api/audit/reconciliation/{correlationId} endpoint with Spring Boot 3.4+ path variable handling
+  - Implement GET /api/audit/reconciliation/reports with filtering using Spring Boot 3.4+ request parameter binding
+  - Add @Operation and @Parameter annotations for SpringDoc OpenAPI v2 documentation
+  - Return reconciliation data in JSON format with Jackson 2.15+ serialization features
   - _Requirements: 5.1, 5.2, 5.6, 6.7_
 
 - [ ] 38. Create statistics and discrepancy REST endpoints with Swagger
-  - Implement GET /api/audit/statistics endpoint
-  - Create GET /api/audit/discrepancies endpoint with filters
-  - Add comprehensive Swagger annotations for all parameters
-  - Add proper error handling and HTTP status codes
+  - Implement GET /api/audit/statistics endpoint with Spring Boot 3.4+ metrics integration
+  - Create GET /api/audit/discrepancies endpoint with filters using Spring Boot 3.4+ filtering capabilities
+  - Add comprehensive SpringDoc OpenAPI v2 annotations for all parameters with OpenAPI 3.0 schemas
+  - Add proper error handling and HTTP status codes using Spring Boot 3.4+ exception handling features
   - _Requirements: 6.4, 5.4, 6.6, 6.7_
 
 - [ ] 39. Add REST API request/response DTOs with Swagger schemas
-  - Create AuditEventDTO for API responses
-  - Create ReconciliationReportDTO for report endpoints
-  - Add @Schema annotations for Swagger documentation
-  - Add proper JSON serialization annotations
+  - Create AuditEventDTO for API responses using Java 17+ records where appropriate
+  - Create ReconciliationReportDTO for report endpoints with Java 17+ sealed classes if applicable
+  - Add @Schema annotations for SpringDoc OpenAPI v2 documentation with OpenAPI 3.0 schema definitions
+  - Add proper JSON serialization annotations compatible with Jackson 2.15+ and Spring Boot 3.4+
   - _Requirements: 6.1, 5.6, 6.6, 6.7_
 
 - [ ] 40. Create REST API integration tests including Swagger
-  - Write @WebMvcTest tests for all endpoints
-  - Test JSON request/response serialization
-  - Test pagination, filtering, and error scenarios
-  - Verify Swagger UI accessibility and documentation
+  - Write @WebMvcTest tests for all endpoints using Spring Boot 3.4+ test framework and JUnit 5
+  - Test JSON request/response serialization with Jackson 2.15+ and Java 17+ features
+  - Test pagination, filtering, and error scenarios with Spring Boot 3.4+ test utilities
+  - Verify SpringDoc OpenAPI v2 Swagger UI accessibility and documentation generation
   - _Requirements: 6.1, 6.2, 6.4, 6.6, 6.7_
 
 - [ ] 41. Add Oracle-specific configuration
-  - Configure Oracle DataSource and connection pool settings
-  - Add Oracle-specific JdbcTemplate properties for performance
-  - Configure transaction management for Oracle with JdbcTemplate
-  - Configure Liquibase for Oracle schema management
+  - Configure Oracle DataSource and connection pool settings optimized for Spring Boot 3.4+ and Java 17+
+  - Add Oracle-specific JdbcTemplate properties for performance with Spring Boot 3.4+ auto-configuration
+  - Configure transaction management for Oracle with JdbcTemplate using Spring Boot 3.4+ transaction features
+  - Configure Liquibase for Oracle schema management compatible with Spring Boot 3.4+ and Java 17+
   - _Requirements: 2.2, 2.5_
 
 - [ ] 42. Create database integration tests with Oracle and Liquibase
-  - Set up @JdbcTest with Oracle test configuration
-  - Test all repository methods with Oracle database using JdbcTemplate
-  - Verify Liquibase schema creation and migrations
-  - Test Oracle-specific features and SQL queries
+  - Set up @JdbcTest with Oracle test configuration for Spring Boot 3.4+ and Java 17+
+  - Test all repository methods with Oracle database using JdbcTemplate and Spring Boot 3.4+ test features
+  - Verify Liquibase schema creation and migrations with Spring Boot 3.4+ Liquibase integration
+  - Test Oracle-specific features and SQL queries using Java 17+ text blocks for better SQL readability
   - _Requirements: 2.2, 2.5, 6.1, 6.2_
 
 - [ ] 43. Implement comprehensive error handling
-  - Create audit-specific exception classes
-  - Add global exception handler for REST API with Swagger error documentation
-  - Implement retry logic for Oracle connection issues with JdbcTemplate
+  - Create audit-specific exception classes using Java 17+ sealed classes where appropriate
+  - Add global exception handler for REST API with SpringDoc OpenAPI v2 error documentation
+  - Implement retry logic for Oracle connection issues with JdbcTemplate using Spring Boot 3.4+ retry mechanisms
   - _Requirements: 7.5, 8.4, 6.6, 6.7_
 
 - [ ] 44. Add API security configuration
-  - Configure Spring Security for REST endpoints
-  - Add authentication and authorization for audit APIs
-  - Implement role-based access control
-  - Configure Swagger UI security for protected endpoints
+  - Configure Spring Security 6.x for REST endpoints compatible with Spring Boot 3.4+
+  - Add authentication and authorization for audit APIs using Spring Security 6.x features
+  - Implement role-based access control with Spring Boot 3.4+ security auto-configuration
+  - Configure SpringDoc OpenAPI v2 Swagger UI security for protected endpoints with OAuth2/JWT integration
   - _Requirements: 8.3, 6.1, 6.7_
 
 - [ ] 45. Create end-to-end integration tests
-  - Test complete audit flow from service to Oracle database using JdbcTemplate
-  - Test REST API endpoints with real Oracle database
-  - Verify correlation ID propagation across all components
-  - Test Liquibase migrations in integration environment
-  - Verify Swagger UI functionality and API documentation
+  - Test complete audit flow from service to Oracle database using JdbcTemplate with Spring Boot 3.4+ and Java 17+
+  - Test REST API endpoints with real Oracle database using Spring Boot 3.4+ test framework
+  - Verify correlation ID propagation across all components with Java 17+ enhanced debugging features
+  - Test Liquibase migrations in integration environment with Spring Boot 3.4+ Liquibase integration
+  - Verify SpringDoc OpenAPI v2 Swagger UI functionality and API documentation generation
   - _Requirements: 1.1, 1.2, 2.5, 6.6, 6.7_
