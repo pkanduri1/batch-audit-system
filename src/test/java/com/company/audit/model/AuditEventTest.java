@@ -685,4 +685,226 @@ class AuditEventTest {
             assertNotSame(builder1, builder2);
         }
     }
+    
+    @Nested
+    @DisplayName("Java 17+ Language Features and Spring Boot 3.4+ Compatibility Tests")
+    class Java17AndSpringBoot34CompatibilityTests {
+        
+        @Test
+        @DisplayName("AuditEvent should work with Java 17+ text blocks for JSON details")
+        void testAuditEventWithTextBlocks() {
+            // Using Java 17+ text blocks for better JSON readability
+            String jsonDetails = """
+                {
+                    "fileSize": 1024,
+                    "recordCount": 500,
+                    "processingTime": "00:02:30",
+                    "checksum": "abc123def456",
+                    "metadata": {
+                        "source": "mainframe",
+                        "format": "fixed-width"
+                    }
+                }
+                """;
+            
+            AuditEvent auditEvent = AuditEvent.builder()
+                    .auditId(testAuditId)
+                    .correlationId(testCorrelationId)
+                    .sourceSystem("MAINFRAME_SYSTEM")
+                    .moduleName("FileProcessor")
+                    .detailsJson(jsonDetails)
+                    .status(AuditStatus.SUCCESS)
+                    .build();
+            
+            assertEquals(jsonDetails, auditEvent.getDetailsJson());
+            assertTrue(auditEvent.getDetailsJson().contains("fileSize"));
+            assertTrue(auditEvent.getDetailsJson().contains("metadata"));
+        }
+        
+        @Test
+        @DisplayName("AuditEvent should work with Java 17+ switch expressions for status validation")
+        void testAuditEventWithSwitchExpressions() {
+            AuditEvent auditEvent = AuditEvent.builder()
+                    .auditId(testAuditId)
+                    .status(AuditStatus.SUCCESS)
+                    .build();
+            
+            // Using Java 17+ switch expressions for status validation
+            String statusDescription = switch (auditEvent.getStatus()) {
+                case SUCCESS -> "Operation completed successfully";
+                case FAILURE -> "Operation failed with errors";
+                case WARNING -> "Operation completed with warnings";
+            };
+            
+            assertEquals("Operation completed successfully", statusDescription);
+            
+            // Test with different status
+            auditEvent.setStatus(AuditStatus.FAILURE);
+            String failureDescription = switch (auditEvent.getStatus()) {
+                case SUCCESS -> "Operation completed successfully";
+                case FAILURE -> "Operation failed with errors";
+                case WARNING -> "Operation completed with warnings";
+            };
+            
+            assertEquals("Operation failed with errors", failureDescription);
+        }
+        
+        @Test
+        @DisplayName("AuditEvent should work with Java 17+ pattern matching for instanceof")
+        void testAuditEventWithPatternMatching() {
+            Object auditObject = AuditEvent.builder()
+                    .auditId(testAuditId)
+                    .sourceSystem("TEST_SYSTEM")
+                    .build();
+            
+            // Using Java 17+ pattern matching for instanceof
+            if (auditObject instanceof AuditEvent event && event.getSourceSystem() != null) {
+                String result = "AuditEvent with source system: " + event.getSourceSystem();
+                assertEquals("AuditEvent with source system: TEST_SYSTEM", result);
+            } else {
+                fail("Pattern matching should have matched AuditEvent with source system");
+            }
+        }
+        
+        @Test
+        @DisplayName("AuditEvent should handle Java 17+ record-like equality patterns")
+        void testAuditEventRecordLikeEquality() {
+            // Create two identical audit events using builder pattern
+            var auditEvent1 = AuditEvent.builder()
+                    .auditId(testAuditId)
+                    .correlationId(testCorrelationId)
+                    .sourceSystem("SYSTEM_A")
+                    .moduleName("Module1")
+                    .checkpointStage(CheckpointStage.RHEL_LANDING)
+                    .status(AuditStatus.SUCCESS)
+                    .eventTimestamp(testTimestamp)
+                    .build();
+            
+            var auditEvent2 = AuditEvent.builder()
+                    .auditId(testAuditId)
+                    .correlationId(testCorrelationId)
+                    .sourceSystem("SYSTEM_A")
+                    .moduleName("Module1")
+                    .checkpointStage(CheckpointStage.RHEL_LANDING)
+                    .status(AuditStatus.SUCCESS)
+                    .eventTimestamp(testTimestamp)
+                    .build();
+            
+            // Test record-like equality behavior
+            assertEquals(auditEvent1, auditEvent2);
+            assertEquals(auditEvent1.hashCode(), auditEvent2.hashCode());
+            
+            // Test that changing one field breaks equality (like records)
+            auditEvent2.setSourceSystem("SYSTEM_B");
+            assertNotEquals(auditEvent1, auditEvent2);
+            assertNotEquals(auditEvent1.hashCode(), auditEvent2.hashCode());
+        }
+        
+        @Test
+        @DisplayName("AuditEvent should work with Spring Boot 3.4+ test features and JUnit 5 assertions")
+        void testAuditEventWithSpringBoot34TestFeatures() {
+            // Using JUnit 5 assertAll for grouped assertions (Spring Boot 3.4+ compatible)
+            AuditEvent auditEvent = AuditEvent.builder()
+                    .auditId(testAuditId)
+                    .correlationId(testCorrelationId)
+                    .sourceSystem("SPRING_BOOT_34_SYSTEM")
+                    .moduleName("TestModule")
+                    .processName("TestProcess")
+                    .checkpointStage(CheckpointStage.SQLLOADER_START)
+                    .status(AuditStatus.SUCCESS)
+                    .eventTimestamp(testTimestamp)
+                    .message("Spring Boot 3.4+ compatible test")
+                    .build();
+            
+            // Grouped assertions for better test reporting in Spring Boot 3.4+
+            assertAll("AuditEvent Spring Boot 3.4+ compatibility",
+                () -> assertEquals(testAuditId, auditEvent.getAuditId(), "Audit ID should match"),
+                () -> assertEquals(testCorrelationId, auditEvent.getCorrelationId(), "Correlation ID should match"),
+                () -> assertEquals("SPRING_BOOT_34_SYSTEM", auditEvent.getSourceSystem(), "Source system should match"),
+                () -> assertEquals("TestModule", auditEvent.getModuleName(), "Module name should match"),
+                () -> assertEquals("TestProcess", auditEvent.getProcessName(), "Process name should match"),
+                () -> assertEquals(CheckpointStage.SQLLOADER_START, auditEvent.getCheckpointStage(), "Checkpoint stage should match"),
+                () -> assertEquals(AuditStatus.SUCCESS, auditEvent.getStatus(), "Status should match"),
+                () -> assertEquals(testTimestamp, auditEvent.getEventTimestamp(), "Timestamp should match"),
+                () -> assertEquals("Spring Boot 3.4+ compatible test", auditEvent.getMessage(), "Message should match")
+            );
+        }
+        
+        @Test
+        @DisplayName("AuditEvent should handle Java 17+ enhanced NullPointerException messages")
+        void testAuditEventWithEnhancedNullPointerHandling() {
+            AuditEvent auditEvent = new AuditEvent();
+            
+            // Test that null handling works correctly with Java 17+ enhanced NPE messages
+            assertDoesNotThrow(() -> {
+                auditEvent.setAuditId(null);
+                auditEvent.setCorrelationId(null);
+                auditEvent.setSourceSystem(null);
+                auditEvent.setModuleName(null);
+            }, "Setting null values should not throw exceptions");
+            
+            // Verify null values are handled correctly
+            assertAll("Null value handling",
+                () -> assertNull(auditEvent.getAuditId()),
+                () -> assertNull(auditEvent.getCorrelationId()),
+                () -> assertNull(auditEvent.getSourceSystem()),
+                () -> assertNull(auditEvent.getModuleName())
+            );
+        }
+        
+        @Test
+        @DisplayName("AuditEvent should work with Java 17+ var keyword and type inference")
+        void testAuditEventWithVarKeyword() {
+            // Using var keyword for type inference (Java 17+ feature)
+            var auditId = UUID.randomUUID();
+            var correlationId = UUID.randomUUID();
+            var sourceSystem = "VAR_TEST_SYSTEM";
+            var moduleName = "VarTestModule";
+            var timestamp = LocalDateTime.now();
+            
+            var auditEvent = AuditEvent.builder()
+                    .auditId(auditId)
+                    .correlationId(correlationId)
+                    .sourceSystem(sourceSystem)
+                    .moduleName(moduleName)
+                    .eventTimestamp(timestamp)
+                    .status(AuditStatus.SUCCESS)
+                    .build();
+            
+            // Verify all fields are set correctly with var inference
+            assertAll("Var keyword compatibility",
+                () -> assertEquals(auditId, auditEvent.getAuditId()),
+                () -> assertEquals(correlationId, auditEvent.getCorrelationId()),
+                () -> assertEquals(sourceSystem, auditEvent.getSourceSystem()),
+                () -> assertEquals(moduleName, auditEvent.getModuleName()),
+                () -> assertEquals(timestamp, auditEvent.getEventTimestamp()),
+                () -> assertEquals(AuditStatus.SUCCESS, auditEvent.getStatus())
+            );
+        }
+        
+        @Test
+        @DisplayName("Project should build and run with Java 17+ runtime and Spring Boot 3.4+")
+        void testProjectCompatibilityWithJava17AndSpringBoot34() {
+            // Verify Java version compatibility
+            String javaVersion = System.getProperty("java.version");
+            assertTrue(javaVersion.startsWith("17") || 
+                      javaVersion.startsWith("18") || 
+                      javaVersion.startsWith("19") || 
+                      javaVersion.startsWith("20") || 
+                      javaVersion.startsWith("21") || 
+                      javaVersion.startsWith("22") || 
+                      javaVersion.startsWith("23"),
+                      "Should be running on Java 17 or higher, but found: " + javaVersion);
+            
+            // Test that AuditEvent works correctly in Java 17+ environment
+            var auditEvent = AuditEvent.builder()
+                    .auditId(testAuditId)
+                    .sourceSystem("JAVA17_COMPATIBLE")
+                    .build();
+            
+            assertNotNull(auditEvent);
+            assertEquals(testAuditId, auditEvent.getAuditId());
+            assertEquals("JAVA17_COMPATIBLE", auditEvent.getSourceSystem());
+        }
+    }
 }

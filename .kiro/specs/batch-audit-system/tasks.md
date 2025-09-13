@@ -87,10 +87,12 @@
   - Add build() method to construct AuditEvent instances
   - _Requirements: 2.2, 2.5_
 
-- [ ] 15. Create AuditEvent unit tests
-  - Write tests for model creation and field validation
-  - Test Builder pattern functionality
-  - Test equals, hashCode, and toString methods
+- [x] 15. Create AuditEvent unit tests
+  - Write tests for model creation and field validation using JUnit 5 and Spring Boot 3.4+ test features
+  - Test Builder pattern functionality with Java 17+ language features
+  - Test equals, hashCode, and toString methods ensuring compatibility with Java 17+ record patterns
+  - Verify project builds and tests pass with Spring Boot 3.4+ and Java 17+ runtime
+  - Use Test_ prefixed tables for any database testing scenarios (e.g., Test_PIPELINE_AUDIT_LOG)
   - _Requirements: 2.2, 8.2_
 
 - [ ] 16. Create AuditDetails model class
@@ -112,9 +114,10 @@
   - _Requirements: 2.4_
 
 - [ ] 19. Create AuditDetails unit tests
-  - Test JSON serialization and deserialization
-  - Test builder pattern functionality
-  - Test field validation and constraints
+  - Test JSON serialization and deserialization with Jackson 2.15+ and Spring Boot 3.4+
+  - Test builder pattern functionality with Java 17+ language features
+  - Test field validation and constraints ensuring Spring Boot 3.4+ compatibility
+  - Use Test_ prefixed tables for any database testing scenarios
   - _Requirements: 2.4_
 
 - [ ] 20. Create basic AuditRepository class with JdbcTemplate
@@ -146,6 +149,7 @@
   - Write tests for basic CRUD operations using TestJdbcTemplate with JUnit 5 and Spring Boot 3.4+ test features
   - Test correlation ID and source system queries with Java 17+ text blocks for SQL readability
   - Verify Liquibase schema creation works correctly with Spring Boot 3.4+ auto-configuration
+  - Use Test_ prefixed tables (e.g., Test_PIPELINE_AUDIT_LOG) for all integration testing scenarios
   - _Requirements: 2.1, 2.2, 6.1, 6.2_
 
 - [ ] 25. Test advanced repository query methods
@@ -167,9 +171,10 @@
   - _Requirements: 1.2, 2.3_
 
 - [ ] 28. Create CorrelationIdManager unit tests
-  - Test UUID generation and uniqueness
-  - Test thread-local storage and isolation
-  - Test cleanup and memory leak prevention
+  - Test UUID generation and uniqueness with Java 17+ UUID improvements
+  - Test thread-local storage and isolation ensuring Spring Boot 3.4+ compatibility
+  - Test cleanup and memory leak prevention with virtual threads compatibility
+  - Use Test_ prefixed tables for any database testing scenarios
   - _Requirements: 1.2, 1.4_
 
 - [ ] 29. Create basic AuditService interface
@@ -197,9 +202,10 @@
   - _Requirements: 7.3, 7.4, 4.3, 4.4_
 
 - [ ] 33. Create AuditService unit tests
-  - Write unit tests with mocked Oracle repository
-  - Test all checkpoint logging methods
-  - Test error handling and validation scenarios
+  - Write unit tests with mocked Oracle repository using Spring Boot 3.4+ test features
+  - Test all checkpoint logging methods with Java 17+ language enhancements
+  - Test error handling and validation scenarios ensuring Spring Boot 3.4+ compatibility
+  - Use Test_ prefixed tables for any database testing scenarios
   - _Requirements: 2.1, 2.2, 7.5_
 
 - [ ] 34. Create Swagger configuration
@@ -250,6 +256,7 @@
   - Test JSON request/response serialization with Jackson 2.15+ and Java 17+ features
   - Test pagination, filtering, and error scenarios with Spring Boot 3.4+ test utilities
   - Verify SpringDoc OpenAPI v2 Swagger UI accessibility and documentation generation
+  - Use Test_ prefixed tables for any database testing scenarios
   - _Requirements: 6.1, 6.2, 6.4, 6.6, 6.7_
 
 - [ ] 41. Add Oracle-specific configuration
@@ -264,6 +271,7 @@
   - Test all repository methods with Oracle database using JdbcTemplate and Spring Boot 3.4+ test features
   - Verify Liquibase schema creation and migrations with Spring Boot 3.4+ Liquibase integration
   - Test Oracle-specific features and SQL queries using Java 17+ text blocks for better SQL readability
+  - Use Test_ prefixed tables (e.g., Test_PIPELINE_AUDIT_LOG) for all database integration testing
   - _Requirements: 2.2, 2.5, 6.1, 6.2_
 
 - [ ] 43. Implement comprehensive error handling
@@ -285,4 +293,5 @@
   - Verify correlation ID propagation across all components with Java 17+ enhanced debugging features
   - Test Liquibase migrations in integration environment with Spring Boot 3.4+ Liquibase integration
   - Verify SpringDoc OpenAPI v2 Swagger UI functionality and API documentation generation
+  - Use Test_ prefixed tables for all end-to-end integration testing scenarios
   - _Requirements: 1.1, 1.2, 2.5, 6.6, 6.7_
