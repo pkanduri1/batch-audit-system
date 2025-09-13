@@ -1,0 +1,20 @@
+{
+  "enabled": true,
+  "name": "Code Quality Analyzer",
+  "description": "Monitors source code files for changes and provides automated code quality analysis including code smells, design patterns, and best practices suggestions",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "src/**/*.java",
+      "src/**/*.yml",
+      "src/**/*.yaml",
+      "src/**/*.xml",
+      "pom.xml"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Analyze the modified code files for potential improvements. Focus on:\n\n1. **Code Smells**: Identify long methods, large classes, duplicate code, complex conditionals, and other maintainability issues\n2. **Design Patterns**: Suggest appropriate design patterns that could improve the code structure (Repository, Factory, Strategy, Observer, etc.)\n3. **Spring Boot Best Practices**: Review Spring annotations usage, dependency injection, configuration management, and layered architecture adherence\n4. **Java Best Practices**: Check for proper exception handling, resource management, null safety, and performance considerations\n5. **Database & JPA**: Analyze entity relationships, query optimization, transaction management, and Oracle-specific considerations\n6. **Testing**: Suggest improvements for test coverage, test structure, and testing patterns\n7. **Security**: Identify potential security vulnerabilities and suggest secure coding practices\n8. **Performance**: Highlight potential performance bottlenecks and optimization opportunities\n\nFor each suggestion:\n- Explain WHY the change would be beneficial\n- Provide specific code examples or refactoring suggestions\n- Prioritize suggestions by impact (High/Medium/Low)\n- Ensure suggestions maintain existing functionality\n- Consider the Spring Boot and Oracle database context of this audit system\n\nFocus on actionable, specific recommendations that improve readability, maintainability, and performance while following enterprise Java development standards."
+  }
+}

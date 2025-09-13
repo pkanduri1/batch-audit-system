@@ -1,0 +1,5 @@
+name: ApiDevelopmentAgent
+tasks:
+  - "Create REST API controller structure"  # Task 30-33
+  - "Add REST API request/response DTOs"    # Task 34
+  - "Add API security configuration"        # Task 39, 11.1

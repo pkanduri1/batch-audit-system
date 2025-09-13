@@ -1,0 +1,22 @@
+{
+  "enabled": true,
+  "name": "Parallel Agent Task Manager",
+  "description": "Automatically triggers parallel agent workflows when any code or configuration files are modified to ensure tasks are distributed across multiple agents and subagents for optimal efficiency",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "src/**/*.java",
+      "src/**/*.yml",
+      "src/**/*.xml",
+      "pom.xml",
+      "plan/**/*.md",
+      "**/*.properties",
+      "**/*.sql"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Files have been modified in the batch audit system. Analyze the changes and create a parallel execution plan using multiple agents and subagents. Break down any required tasks into smaller parallel workstreams that can be executed simultaneously. Assign different agents to handle: 1) Code analysis and testing, 2) Configuration validation, 3) Documentation updates, 4) Integration verification, and 5) Performance optimization. Ensure all agents work in parallel where possible to maximize efficiency and minimize total execution time."
+  }
+}

@@ -1,0 +1,6 @@
+name: UnitTestingAgent
+tasks:
+  - "Create AuditEvent unit tests"           # Task 11
+  - "Create AuditDetails unit tests"         # Task 15
+  - "Create CorrelationIdManager unit tests" # Task 24
+  - "Create AuditService unit tests"         # Task 29

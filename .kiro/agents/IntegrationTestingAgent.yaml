@@ -1,0 +1,7 @@
+name: IntegrationTestingAgent
+tasks:
+  - "Create AuditRepository integration tests"      # Task 20
+  - "Test advanced repository query methods"        # Task 21
+  - "Create REST API integration tests"             # Task 35
+  - "Create database integration tests with Oracle" # Task 37
+  - "Create end-to-end integration tests"           # Task 40

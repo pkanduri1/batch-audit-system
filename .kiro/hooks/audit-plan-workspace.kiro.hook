@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Audit Plan Workspace Commands",
+  "description": "Monitors changes to files in the audit-plan folder and ensures all maven, git, java, and bash commands are executed only within the /Users/pavankanduri/kiro-ws/audit-plan directory for security and workspace isolation",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "/Users/pavankanduri/kiro-ws/audit-plan/**/*"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "When executing any maven, git, java, or bash commands, ensure you are working within the /Users/pavankanduri/kiro-ws/audit-plan directory. Do not run any commands outside of this folder. Always verify your current working directory before executing commands and change to the audit-plan folder if needed using 'cd /Users/pavankanduri/kiro-ws/audit-plan'."
+  }
+}

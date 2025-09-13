@@ -1,0 +1,11 @@
+name: DatabaseSetupAgent
+tasks:
+  - "Create basic Maven project structure"  # Task 1
+  - "Add Oracle database dependencies"      # Task 2
+  - "Create basic Spring Boot application class"  # Task 3
+  - "Configure Oracle database connection properties"  # Task 4
+  - "Create AuditStatus enum"               # Task 5
+  - "Create CheckpointStage enum"           # Task 6
+  - "Create basic AuditEvent entity structure"  # Task 7-10
+  - "Create AuditDetails model class"       # Task 12-14
+  - "Create basic AuditRepository interface"  # Task 16-19

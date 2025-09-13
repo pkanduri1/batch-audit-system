@@ -1,0 +1,5 @@
+name: CoreServicesAgent
+tasks:
+  - "Create CorrelationIdManager interface and implementation"  # Task 22-23
+  - "Create basic AuditService interface and implementation"    # Task 25-28
+  - "Implement reconciliation service"                          # Task 7.1, 7.2

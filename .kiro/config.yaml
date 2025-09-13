@@ -1,0 +1,9 @@
+# Kiro Project-Level Configuration
+project:
+  name: AuditSystem-Development
+  version: "1.0.0"
+
+# Git Repository Details
+git:
+  repository_url: "https://github.com/pkanduri1/batch-audit-system.git"
+  default_branch: "main"

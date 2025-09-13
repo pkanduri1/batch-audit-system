@@ -1,0 +1,35 @@
+hooks:
+  - name: DocumentationUpdaterHook
+    trigger: on_task_completion
+    action: scripts/update_documentation.sh
+    conditions:
+      - task.status == 'SUCCESS'
+
+  - name: GitCommitAndPushHook
+    trigger: on_task_completion
+    action: scripts/commit_and_push.sh
+    conditions:
+      - task.status == 'SUCCESS'
+      - task.tags contains 'ready-for-commit'
+
+  - name: TestingAndValidationHook
+    trigger: on_git_push
+    action: scripts/trigger_ci.sh
+
+  - name: DependencyCheckHook
+    trigger: on_file_change
+    action: scripts/check_dependencies.sh
+    conditions:
+      - file.name == 'pom.xml'
+
+  - name: TestReportGeneratorHook
+    trigger: on_ci_completion
+    action: scripts/generate_test_report.sh
+    conditions:
+      - ci.status == 'SUCCESS'
+
+  - name: CodeCoverageHook
+    trigger: on_ci_completion
+    action: scripts/check_code_coverage.sh
+    conditions:
+      - ci.status == 'SUCCESS'

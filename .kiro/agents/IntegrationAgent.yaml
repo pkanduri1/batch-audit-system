@@ -1,0 +1,7 @@
+name: IntegrationAgent
+tasks:
+  - "Add Oracle-specific configuration"          # Task 36
+  - "Implement comprehensive error handling"     # Task 38
+  - "Implement error handling and resilience"    # Task 6.1, 6.2
+  - "Implement AOP for automatic audit capture"  # Task 8.1, 8.2
+  - "Implement event-driven audit integration"   # Task 10.1, 10.2
