@@ -1,0 +1,64 @@
+spring:
+  application:
+    name: batch-audit-system
+  
+  profiles:
+    active: local
+  
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.Oracle19cDialect
+        format_sql: true
+        jdbc:
+          batch_size: 100
+    show-sql: false
+  
+  # Liquibase Configuration
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    enabled: true
+    drop-first: false
+
+# Server Configuration
+server:
+  port: 8080
+  servlet:
+    context-path: /audit
+
+# Management and Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# Audit System Configuration
+audit:
+  database:
+    batch-size: 100
+    connection-pool-size: 10
+  retention:
+    days: 365
+  reconciliation:
+    auto-generate: true
+    schedule: "0 0 6 * * ?"
+  dashboard:
+    page-size: 50
+    max-export-records: 10000
+
+# Logging Configuration
+logging:
+  level:
+    com.company.audit: INFO
+    org.springframework.jdbc: DEBUG
+    liquibase: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

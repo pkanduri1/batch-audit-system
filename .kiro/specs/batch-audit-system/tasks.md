@@ -12,7 +12,7 @@
   - Add Liquibase dependency for database schema management
   - _Requirements: 2.2_
 
-- [ ] 3. Create basic Spring Boot application class
+- [x] 3. Create basic Spring Boot application class
   - Create main application class with @SpringBootApplication
   - Add basic application.yml configuration file
   - _Requirements: 2.1_

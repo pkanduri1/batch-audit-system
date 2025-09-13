@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: batch-audit-system-test
+  
+  # Disable database auto-configuration for basic context test
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.liquibase.LiquibaseAutoConfiguration
+
+# Disable Liquibase for test
+spring.liquibase.enabled: false
+
+# Test-specific logging
+logging:
+  level:
+    com.company.audit: DEBUG
+    org.springframework: WARN
