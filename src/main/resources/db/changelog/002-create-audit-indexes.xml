@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="002-create-audit-indexes" author="audit-system">
+        <comment>Create optimized indexes for PIPELINE_AUDIT_LOG table to support common query patterns</comment>
+        
+        <!-- Index for correlation ID queries - most common access pattern -->
+        <createIndex tableName="PIPELINE_AUDIT_LOG" indexName="IDX_AUDIT_CORRELATION_ID">
+            <column name="CORRELATION_ID"/>
+            <column name="EVENT_TIMESTAMP"/>
+        </createIndex>
+        
+        <!-- Index for source system filtering -->
+        <createIndex tableName="PIPELINE_AUDIT_LOG" indexName="IDX_AUDIT_SOURCE_SYSTEM">
+            <column name="SOURCE_SYSTEM"/>
+            <column name="CHECKPOINT_STAGE"/>
+            <column name="EVENT_TIMESTAMP"/>
+        </createIndex>
+        
+        <!-- Index for module name queries -->
+        <createIndex tableName="PIPELINE_AUDIT_LOG" indexName="IDX_AUDIT_MODULE_NAME">
+            <column name="MODULE_NAME"/>
+            <column name="STATUS"/>
+            <column name="EVENT_TIMESTAMP"/>
+        </createIndex>
+        
+        <!-- Index for timestamp range queries -->
+        <createIndex tableName="PIPELINE_AUDIT_LOG" indexName="IDX_AUDIT_EVENT_TIMESTAMP">
+            <column name="EVENT_TIMESTAMP"/>
+            <column name="SOURCE_SYSTEM"/>
+        </createIndex>
+        
+        <!-- Composite index for correlation ID and status queries -->
+        <createIndex tableName="PIPELINE_AUDIT_LOG" indexName="IDX_AUDIT_CORR_STATUS">
+            <column name="CORRELATION_ID"/>
+            <column name="STATUS"/>
+        </createIndex>
+        
+        <!-- Index for key identifier lookups -->
+        <createIndex tableName="PIPELINE_AUDIT_LOG" indexName="IDX_AUDIT_KEY_IDENTIFIER">
+            <column name="KEY_IDENTIFIER"/>
+            <column name="SOURCE_SYSTEM"/>
+        </createIndex>
+        
+        <!-- Add index comments for documentation -->
+        <sql>
+            COMMENT ON INDEX IDX_AUDIT_CORRELATION_ID IS 'Optimizes queries by correlation ID with timestamp ordering'
+        </sql>
+        
+        <sql>
+            COMMENT ON INDEX IDX_AUDIT_SOURCE_SYSTEM IS 'Optimizes queries filtering by source system and checkpoint stage'
+        </sql>
+        
+        <sql>
+            COMMENT ON INDEX IDX_AUDIT_MODULE_NAME IS 'Optimizes queries filtering by module name and status'
+        </sql>
+        
+        <sql>
+            COMMENT ON INDEX IDX_AUDIT_EVENT_TIMESTAMP IS 'Optimizes date range queries with source system filtering'
+        </sql>
+        
+        <sql>
+            COMMENT ON INDEX IDX_AUDIT_CORR_STATUS IS 'Optimizes correlation ID queries with status filtering'
+        </sql>
+        
+        <sql>
+            COMMENT ON INDEX IDX_AUDIT_KEY_IDENTIFIER IS 'Optimizes entity-specific lookups by key identifier'
+        </sql>
+        
+        <rollback>
+            <dropIndex tableName="PIPELINE_AUDIT_LOG" indexName="IDX_AUDIT_CORRELATION_ID"/>
+            <dropIndex tableName="PIPELINE_AUDIT_LOG" indexName="IDX_AUDIT_SOURCE_SYSTEM"/>
+            <dropIndex tableName="PIPELINE_AUDIT_LOG" indexName="IDX_AUDIT_MODULE_NAME"/>
+            <dropIndex tableName="PIPELINE_AUDIT_LOG" indexName="IDX_AUDIT_EVENT_TIMESTAMP"/>
+            <dropIndex tableName="PIPELINE_AUDIT_LOG" indexName="IDX_AUDIT_CORR_STATUS"/>
+            <dropIndex tableName="PIPELINE_AUDIT_LOG" indexName="IDX_AUDIT_KEY_IDENTIFIER"/>
+        </rollback>
+        
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,7 +1,7 @@
 # Technology Stack
 
 ## Core Framework
-- **Spring Boot 2.7+**: Main application framework with auto-configuration
+- **Spring Boot 3.4+**: Main application framework with auto-configuration
 - **Spring JdbcTemplate**: Data access layer with Oracle database integration
 - **Spring Web MVC**: REST API endpoints for dashboard and reporting
 - **Spring Security**: Authentication and authorization for audit APIs
@@ -16,7 +16,7 @@
 
 ## Build System & Dependencies
 - **Maven**: Build automation and dependency management
-- **Java 11+**: Target runtime environment
+- **Java 17+**: Target runtime environment
 - **Jackson**: JSON serialization for audit details and API responses
 - **JUnit 5**: Unit and integration testing framework
 - **Mockito**: Mocking framework for service layer testing

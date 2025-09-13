@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="001-create-audit-table" author="audit-system">
+        <comment>Create PIPELINE_AUDIT_LOG table for comprehensive audit trail tracking</comment>
+        
+        <createTable tableName="PIPELINE_AUDIT_LOG">
+            <!-- Primary Key -->
+            <column name="AUDIT_ID" type="VARCHAR2(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            
+            <!-- Correlation and System Identification -->
+            <column name="CORRELATION_ID" type="VARCHAR2(36)">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="SOURCE_SYSTEM" type="VARCHAR2(50)">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="MODULE_NAME" type="VARCHAR2(100)">
+                <constraints nullable="true"/>
+            </column>
+            
+            <!-- Process and Entity Information -->
+            <column name="PROCESS_NAME" type="VARCHAR2(100)">
+                <constraints nullable="true"/>
+            </column>
+            
+            <column name="SOURCE_ENTITY" type="VARCHAR2(200)">
+                <constraints nullable="true"/>
+            </column>
+            
+            <column name="DESTINATION_ENTITY" type="VARCHAR2(200)">
+                <constraints nullable="true"/>
+            </column>
+            
+            <column name="KEY_IDENTIFIER" type="VARCHAR2(100)">
+                <constraints nullable="true"/>
+            </column>
+            
+            <!-- Checkpoint and Status Information -->
+            <column name="CHECKPOINT_STAGE" type="VARCHAR2(50)">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="STATUS" type="VARCHAR2(20)">
+                <constraints nullable="false"/>
+            </column>
+            
+            <!-- Timestamp and Message -->
+            <column name="EVENT_TIMESTAMP" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="MESSAGE" type="VARCHAR2(1000)">
+                <constraints nullable="true"/>
+            </column>
+            
+            <!-- JSON Details for Metadata -->
+            <column name="DETAILS_JSON" type="CLOB">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        
+        <!-- Add constraints for enum values -->
+        <addCheckConstraint tableName="PIPELINE_AUDIT_LOG" 
+                           constraintName="CHK_AUDIT_STATUS"
+                           checkCondition="STATUS IN ('SUCCESS', 'FAILURE', 'WARNING')"/>
+        
+        <addCheckConstraint tableName="PIPELINE_AUDIT_LOG" 
+                           constraintName="CHK_CHECKPOINT_STAGE"
+                           checkCondition="CHECKPOINT_STAGE IN ('RHEL_LANDING', 'SQLLOADER_START', 'SQLLOADER_COMPLETE', 'LOGIC_APPLIED', 'FILE_GENERATED')"/>
+        
+        <!-- Add comments for documentation -->
+        <setTableRemarks tableName="PIPELINE_AUDIT_LOG" 
+                        remarks="Comprehensive audit trail table for tracking data pipeline events across all stages"/>
+        
+        <setColumnRemarks tableName="PIPELINE_AUDIT_LOG" columnName="AUDIT_ID" 
+                         remarks="Unique identifier for each audit event (UUID format)"/>
+        
+        <setColumnRemarks tableName="PIPELINE_AUDIT_LOG" columnName="CORRELATION_ID" 
+                         remarks="Links related audit events across pipeline stages (UUID format)"/>
+        
+        <setColumnRemarks tableName="PIPELINE_AUDIT_LOG" columnName="SOURCE_SYSTEM" 
+                         remarks="Identifier for the source system generating the data"/>
+        
+        <setColumnRemarks tableName="PIPELINE_AUDIT_LOG" columnName="MODULE_NAME" 
+                         remarks="Name of the Java module or component processing the data"/>
+        
+        <setColumnRemarks tableName="PIPELINE_AUDIT_LOG" columnName="CHECKPOINT_STAGE" 
+                         remarks="Pipeline stage where the audit event occurred"/>
+        
+        <setColumnRemarks tableName="PIPELINE_AUDIT_LOG" columnName="STATUS" 
+                         remarks="Outcome status of the audited operation"/>
+        
+        <setColumnRemarks tableName="PIPELINE_AUDIT_LOG" columnName="EVENT_TIMESTAMP" 
+                         remarks="UTC timestamp when the audit event occurred"/>
+        
+        <setColumnRemarks tableName="PIPELINE_AUDIT_LOG" columnName="DETAILS_JSON" 
+                         remarks="JSON metadata including file info, record counts, and business rule details"/>
+        
+    </changeSet>
+
+</databaseChangeLog>

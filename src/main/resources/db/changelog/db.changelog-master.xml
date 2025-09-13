@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog-ext
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+    <!-- 
+    Master changelog file for Batch Audit System
+    
+    Naming Convention:
+    - Use sequential numbering: 001, 002, 003, etc.
+    - Format: {number}-{description}.xml
+    - Examples: 001-create-audit-table.xml, 002-create-audit-indexes.xml
+    
+    Organization:
+    - Schema creation changes first
+    - Index creation changes second
+    - Data migration changes third
+    - Schema modification changes last
+    -->
+
+    <!-- Include individual changelog files in order -->
+    <!-- Uncomment as changelog files are created -->
+    
+    <!-- Schema Creation -->
+    <include file="db/changelog/001-create-audit-table.xml"/>
+    
+    <!-- Index Creation -->
+    <include file="db/changelog/002-create-audit-indexes.xml"/>
+    
+    <!-- Future changesets will be added here following the naming convention -->
+
+</databaseChangeLog>

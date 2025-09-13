@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- 
+    Template for creating new changelog files
+    
+    Instructions:
+    1. Copy this template to create new changelog files
+    2. Follow naming convention: {number}-{description}.xml
+    3. Update the changeset id, author, and description
+    4. Replace the example SQL with your actual changes
+    5. Add rollback instructions where possible
+    6. Include this file in db.changelog-master.xml
+    -->
+
+    <changeSet id="CHANGESET_ID_HERE" author="AUTHOR_NAME_HERE" context="dev,test,prod">
+        <comment>DESCRIPTION_OF_CHANGE_HERE</comment>
+        
+        <!-- Example: Create Table -->
+        <!--
+        <createTable tableName="EXAMPLE_TABLE">
+            <column name="ID" type="VARCHAR2(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="NAME" type="VARCHAR2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="CREATED_DATE" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        -->
+        
+        <!-- Example: Add Index -->
+        <!--
+        <createIndex tableName="EXAMPLE_TABLE" indexName="IDX_EXAMPLE_NAME">
+            <column name="NAME"/>
+        </createIndex>
+        -->
+        
+        <!-- Example: Custom SQL -->
+        <!--
+        <sql>
+            -- Your custom SQL here
+            -- Use Oracle-specific syntax
+        </sql>
+        -->
+        
+        <!-- Rollback Instructions (optional but recommended) -->
+        <!--
+        <rollback>
+            <dropTable tableName="EXAMPLE_TABLE"/>
+        </rollback>
+        -->
+    </changeSet>
+
+</databaseChangeLog>
