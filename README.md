@@ -132,7 +132,7 @@ The project has completed the foundation phase and is progressing through core e
 
 ### Prerequisites
 
-- Java 11 or higher
+- Java 17 or higher
 - Maven 3.6+
 - Oracle Database 19c/21c
 - Access to mainframe source systems (for production use)
