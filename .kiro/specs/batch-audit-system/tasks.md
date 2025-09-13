@@ -17,7 +17,7 @@
   - Add basic application.yml configuration file
   - _Requirements: 2.1_
 
-- [ ] 4. Configure Oracle database connection properties
+- [x] 4. Configure Oracle database connection properties
   - Add Oracle database connection URL, username, password to application.yml
   - Configure JdbcTemplate and DataSource properties for Oracle
   - Configure HikariCP connection pool settings for Oracle
@@ -25,7 +25,7 @@
   - Configure SpringDoc OpenAPI properties for Swagger UI
   - _Requirements: 2.2, 2.5, 6.7_
 
-- [ ] 5. Create Oracle local development properties file
+- [x] 5. Create Oracle local development properties file
   - Create application-local.properties with Oracle connection details
   - Configure connection to localhost:1521/ORCLPDB1 with cm3int schema
   - Set up secure password configuration for local development

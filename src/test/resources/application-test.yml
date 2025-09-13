@@ -2,17 +2,78 @@ spring:
   application:
     name: batch-audit-system-test
   
-  # Disable database auto-configuration for basic context test
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-      - org.springframework.boot.autoconfigure.liquibase.LiquibaseAutoConfiguration
+  # Oracle Database Configuration for Testing
+  datasource:
+    url: jdbc:oracle:thin:@//localhost:1521/ORCLPDB1
+    username: cm3int_test
+    password: test_password
+    driver-class-name: oracle.jdbc.OracleDriver
+    
+    # HikariCP Connection Pool Configuration for Tests
+    hikari:
+      pool-name: TestAuditHikariPool
+      maximum-pool-size: 5
+      minimum-idle: 2
+      idle-timeout: 300000
+      max-lifetime: 1800000
+      connection-timeout: 10000
+      connection-test-query: SELECT 1 FROM DUAL
+      auto-commit: false
+  
+  # JdbcTemplate Configuration for Tests
+  jdbc:
+    template:
+      fetch-size: 50
+      max-rows: 1000
+      query-timeout: 15
+  
+  # JPA Configuration for Tests
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.Oracle19cDialect
+        format_sql: true
+        jdbc:
+          batch_size: 50
+          time_zone: UTC
+    show-sql: true
+  
+  # Liquibase Configuration for Tests
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    enabled: true
+    drop-first: false
+    contexts: test
+    default-schema: cm3int_test
+    liquibase-schema: cm3int_test
 
-# Disable Liquibase for test
-spring.liquibase.enabled: false
+# SpringDoc OpenAPI Configuration for Tests
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+# Audit System Configuration for Tests
+audit:
+  database:
+    batch-size: 50
+    connection-pool-size: 5
+  retention:
+    days: 30
+  reconciliation:
+    auto-generate: false
+    schedule: "-"
+  dashboard:
+    page-size: 20
+    max-export-records: 1000
 
 # Test-specific logging
 logging:
   level:
     com.company.audit: DEBUG
+    org.springframework.jdbc: DEBUG
+    liquibase: INFO
     org.springframework: WARN
