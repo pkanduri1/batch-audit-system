@@ -1,20 +1,24 @@
 # Batch Audit System
 
-A comprehensive end-to-end audit trail system for enterprise data processing pipelines built with Spring Boot and Oracle Database.
+A comprehensive end-to-end audit trail system for enterprise data processing pipelines built with Spring Boot 3.4+ and Oracle Database.
 
 ## Overview
 
 The Batch Audit System provides complete traceability for data processing pipelines that ingest files from multiple mainframe source systems, process them through Oracle staging databases, apply business logic via Java modules, and generate final output files. The system uses Spring JdbcTemplate for direct SQL operations with Oracle database for optimal performance and control.
 
+**🎉 PRODUCTION READY**: Complete implementation with REST API, security, comprehensive testing, and Oracle integration.
+
 ### Key Features
 
-- **Multi-source system support** with distinct audit trails
-- **Checkpoint-based logging** at critical pipeline transition points
-- **REST API dashboard** for real-time monitoring and historical analysis
-- **Automated reconciliation reports** with discrepancy detection
-- **Oracle database persistence** with optimized indexing for audit queries
-- **Liquibase schema management** for database version control
-- **Spring Boot architecture** with comprehensive error handling and resilience
+- **Multi-source system support** with distinct audit trails and correlation ID tracking
+- **Checkpoint-based logging** at critical pipeline transition points with @Auditable annotation
+- **REST API dashboard** for real-time monitoring, historical analysis, and reconciliation reports
+- **Automated reconciliation reports** with discrepancy detection and data integrity verification
+- **Oracle database persistence** with optimized indexing and HikariCP connection pooling
+- **Spring Security 6.x** with JWT authentication and role-based access control
+- **Comprehensive error handling** with retry mechanisms and circuit breaker patterns
+- **SpringDoc OpenAPI v2** with interactive Swagger UI documentation
+- **Liquibase schema management** for database version control and migrations
 
 ## Technology Stack
 
@@ -34,10 +38,12 @@ The Batch Audit System provides complete traceability for data processing pipeli
 
 ### Build System & Dependencies
 - **Maven**: Build automation and dependency management
-- **Java 17+**: Target runtime environment
+- **Java 17+**: Target runtime environment with enhanced language features
 - **Jackson**: JSON serialization for audit details and API responses
+- **SpringDoc OpenAPI v2**: Interactive API documentation with Swagger UI
 - **JUnit 5**: Unit and integration testing framework
 - **Mockito**: Mocking framework for service layer testing
+- **Spring Retry**: Resilience patterns for Oracle database operations
 
 ## Project Structure
 
@@ -85,7 +91,7 @@ docs/
 
 **🎉 PRODUCTION READY**: All 45 tasks completed (100% progress). The system is ready for production deployment with comprehensive REST API, Oracle integration, security framework, and extensive testing coverage.
 
-### Current Status: All Phases Complete
+### Current Status: All Phases Complete ✅
 - ✅ **Phase 1 (Tasks 1-16)**: Foundation - Maven setup, Oracle configuration, core entities
 - ✅ **Phase 2 (Tasks 17-25)**: Data Layer - Models, repositories, database integration  
 - ✅ **Phase 3 (Tasks 26-33)**: Service Layer - Business logic and audit services
@@ -117,8 +123,9 @@ docs/
 - **Complete REST API**: All dashboard and reporting endpoints implemented
 - **AuditDashboardController**: Comprehensive controller with pagination and filtering
 - **API DTOs**: Java 17+ records and sealed classes for type-safe API responses
-- **Swagger Documentation**: Complete OpenAPI 3.0 specification with interactive UI
+- **SpringDoc OpenAPI v2**: Complete Swagger UI with interactive API testing
 - **Security Integration**: Spring Security 6.x with JWT authentication and RBAC
+- **Error Handling**: Global exception handler with audit-specific error responses
 
 #### Testing & Quality ✅
 - **Comprehensive Test Coverage**: Unit, integration, and end-to-end tests
@@ -128,14 +135,15 @@ docs/
 - **Performance Testing**: Query optimization and connection pooling validation
 
 ### Key Features Delivered
-- **Multi-source system support** with distinct audit trails
-- **Checkpoint-based logging** at critical pipeline transition points  
-- **REST API dashboard** for real-time monitoring and historical analysis
-- **Automated reconciliation reports** with discrepancy detection
-- **Oracle database persistence** with optimized indexing for audit queries
-- **Spring Security integration** with JWT authentication and role-based access
-- **Comprehensive error handling** with retry mechanisms and circuit breaker patterns
-- **Production-ready configuration** with environment-specific profiles
+- **Multi-source system support** with distinct audit trails and correlation ID tracking
+- **Checkpoint-based logging** at critical pipeline transition points using @Auditable annotation
+- **REST API dashboard** for real-time monitoring, historical analysis, and reconciliation reports
+- **Automated reconciliation reports** with discrepancy detection and data integrity verification
+- **Oracle database persistence** with optimized indexing and HikariCP connection pooling
+- **Spring Security 6.x integration** with JWT authentication and role-based access control
+- **SpringDoc OpenAPI v2** with interactive Swagger UI for API documentation and testing
+- **Comprehensive error handling** with retry mechanisms, circuit breaker patterns, and graceful degradation
+- **Production-ready configuration** with environment-specific profiles and Oracle optimization
 
 **Documentation References**:
 - Architecture overview: `docs/architecture-overview.md`
@@ -204,21 +212,21 @@ The foundation phase is complete. The application is ready for database setup an
 6. **Verify Setup**
    ```bash
    # Check application health
-   curl http://localhost:8080/actuator/health
+   curl http://localhost:8080/audit/actuator/health
    
    # View Swagger UI with complete API documentation
-   open http://localhost:8080/swagger-ui.html
+   open http://localhost:8080/audit/swagger-ui.html
    
    # Test API endpoints (requires authentication)
    curl -H "Authorization: Bearer <jwt-token>" \
-     http://localhost:8080/api/audit/events?page=0&size=10
+     http://localhost:8080/audit/api/audit/events?page=0&size=10
    ```
 
 7. **Access API Documentation**
-   - **Swagger UI**: http://localhost:8080/swagger-ui.html
-   - **OpenAPI Specification**: http://localhost:8080/v3/api-docs
-   - **Health Monitoring**: http://localhost:8080/actuator/health
-   - **Metrics**: http://localhost:8080/actuator/metrics
+   - **Swagger UI**: http://localhost:8080/audit/swagger-ui.html
+   - **OpenAPI Specification**: http://localhost:8080/audit/api-docs
+   - **Health Monitoring**: http://localhost:8080/audit/actuator/health
+   - **Metrics**: http://localhost:8080/audit/actuator/metrics
 
 ## Database Schema Management
 
@@ -307,9 +315,10 @@ The system provides a comprehensive REST API for dashboard and reporting functio
 - **Features**: Record count mismatches, control total discrepancies, processing timeouts
 
 ### API Documentation
-- **Swagger UI**: Available at `/swagger-ui.html` with interactive API testing
-- **OpenAPI Spec**: Available at `/v3/api-docs` for client library generation
-- **Authentication**: JWT token support with role-based access control
+- **Swagger UI**: Available at `/audit/swagger-ui.html` with interactive API testing
+- **OpenAPI Spec**: Available at `/audit/api-docs` for client library generation
+- **Authentication**: JWT token support with role-based access control (AUDIT_USER, AUDIT_ADMIN)
+- **Security Integration**: OAuth2/JWT configuration for Swagger UI testing
 
 ## Configuration
 
@@ -337,6 +346,17 @@ audit:
   dashboard:
     page-size: 50
     max-export-records: 10000
+  retry:
+    enabled: true
+    default:
+      max-attempts: 3
+      initial-delay: 1000
+      max-delay: 30000
+      multiplier: 2.0
+  security:
+    jwt:
+      jwk-set-uri: ${JWT_JWK_SET_URI:}
+      issuer: ${JWT_ISSUER:}
 
 spring:
   liquibase:
@@ -344,18 +364,34 @@ spring:
     contexts: ${spring.profiles.active}
     drop-first: false
     enabled: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${JWT_JWK_SET_URI:}
+          issuer: ${JWT_ISSUER:}
+
+springdoc:
+  api-docs:
+    path: /api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    try-it-out-enabled: true
 ```
 
 ## Architecture Patterns
 
 - **Layered Architecture**: Clear separation between presentation, service, repository, and entity layers with strict dependency flow
-- **Repository Pattern**: Data access abstraction using Spring JdbcTemplate with Oracle optimization
+- **Repository Pattern**: Data access abstraction using Spring JdbcTemplate with Oracle optimization and HikariCP pooling
 - **Checkpoint-Based Logging**: Structured audit capture at critical pipeline transition points using @Auditable annotation
-- **Correlation ID Management**: Thread-safe tracking of related audit events across pipeline stages
-- **REST API Design**: Comprehensive dashboard and reporting endpoints with pagination and filtering
-- **Aspect-Oriented Programming (AOP)**: Automatic audit capture with @Auditable annotation processing
-- **Event-Driven Architecture**: Spring Application Events for decoupled audit logging
+- **Correlation ID Management**: Thread-safe tracking of related audit events across pipeline stages with virtual thread compatibility
+- **REST API Design**: Comprehensive dashboard and reporting endpoints with pagination, filtering, and OpenAPI documentation
+- **Aspect-Oriented Programming (AOP)**: Automatic audit capture with @Auditable annotation processing and retry mechanisms
+- **Event-Driven Architecture**: Spring Application Events for decoupled audit logging and system integration
 - **Circuit Breaker Pattern**: Resilience for audit system failures without breaking main business flow
+- **Security-First Design**: JWT authentication, role-based access control, and OAuth2 resource server integration
 
 ## Development Workflow
 
