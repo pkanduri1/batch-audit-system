@@ -7,6 +7,8 @@ import com.company.audit.model.AuditDetails;
 import com.company.audit.model.AuditEvent;
 import com.company.audit.model.dto.AuditStatistics;
 import com.company.audit.model.dto.DataDiscrepancy;
+import com.company.audit.model.dto.ReconciliationReport;
+import com.company.audit.model.dto.ReconciliationReportDTO;
 import com.company.audit.repository.AuditRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -1393,5 +1395,846 @@ public class AuditServiceImpl implements AuditService {
         }
         
         return discrepancies;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ReconciliationReport generateReconciliationReport(UUID correlationId) {
+        logger.debug("Generating reconciliation report for correlation ID: {}", correlationId);
+        
+        if (correlationId == null) {
+            throw new IllegalArgumentException("Correlation ID cannot be null");
+        }
+        
+        try {
+            // Get all audit events for this correlation ID
+            List<AuditEvent> events = auditRepository.findByCorrelationIdOrderByEventTimestamp(correlationId);
+            
+            if (events.isEmpty()) {
+                logger.warn("No audit events found for correlation ID: {}", correlationId);
+                throw new IllegalArgumentException("No audit events found for correlation ID: " + correlationId);
+            }
+            
+            // Extract basic information
+            String sourceSystem = events.stream()
+                .map(AuditEvent::getSourceSystem)
+                .filter(java.util.Objects::nonNull)
+                .findFirst()
+                .orElse("UNKNOWN");
+            
+            LocalDateTime pipelineStartTime = events.stream()
+                .map(AuditEvent::getEventTimestamp)
+                .filter(java.util.Objects::nonNull)
+                .min(LocalDateTime::compareTo)
+                .orElse(LocalDateTime.now());
+            
+            LocalDateTime pipelineEndTime = events.stream()
+                .map(AuditEvent::getEventTimestamp)
+                .filter(java.util.Objects::nonNull)
+                .max(LocalDateTime::compareTo)
+                .orElse(LocalDateTime.now());
+            
+            // Determine overall status
+            boolean hasFailures = events.stream().anyMatch(e -> e.getStatus() == AuditStatus.FAILURE);
+            boolean hasWarnings = events.stream().anyMatch(e -> e.getStatus() == AuditStatus.WARNING);
+            String overallStatus = hasFailures ? "FAILURE" : (hasWarnings ? "WARNING" : "SUCCESS");
+            
+            // Calculate checkpoint counts
+            Map<String, Long> checkpointCounts = calculateCheckpointCounts(events);
+            
+            // Calculate control totals
+            Map<String, Double> controlTotals = calculateControlTotals(events);
+            
+            // Identify discrepancies
+            List<DataDiscrepancy> discrepancies = checkReconciliationDiscrepancies(correlationId, events);
+            
+            // Create summary
+            ReconciliationReport.ReconciliationSummary summary = createReconciliationSummary(events, pipelineStartTime, pipelineEndTime);
+            
+            // Create checkpoint details
+            List<ReconciliationReport.CheckpointDetail> checkpointDetails = createCheckpointDetails(events);
+            
+            // Create the report
+            ReconciliationReport report = new ReconciliationReport(
+                correlationId, sourceSystem, LocalDateTime.now(),
+                pipelineStartTime, pipelineEndTime, overallStatus,
+                checkpointCounts, controlTotals, discrepancies,
+                summary, checkpointDetails
+            );
+            
+            logger.info("Generated reconciliation report for correlation ID: {} with {} events, {} discrepancies", 
+                correlationId, events.size(), discrepancies.size());
+            
+            return report;
+            
+        } catch (Exception e) {
+            logger.error("Failed to generate reconciliation report for correlation ID: {}", correlationId, e);
+            throw new AuditPersistenceException("Failed to generate reconciliation report", e);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ReconciliationReport> getReconciliationReports(Map<String, String> filters) {
+        logger.debug("Retrieving reconciliation reports with filters: {}", filters);
+        
+        try {
+            // Get date range from filters
+            LocalDateTime startDate = LocalDateTime.now().minusDays(30); // Default: last 30 days
+            LocalDateTime endDate = LocalDateTime.now();
+            
+            if (filters != null) {
+                if (filters.containsKey("startDate")) {
+                    try {
+                        startDate = LocalDateTime.parse(filters.get("startDate"));
+                    } catch (Exception e) {
+                        logger.warn("Invalid startDate filter format, using default: {}", e.getMessage());
+                    }
+                }
+                
+                if (filters.containsKey("endDate")) {
+                    try {
+                        endDate = LocalDateTime.parse(filters.get("endDate"));
+                    } catch (Exception e) {
+                        logger.warn("Invalid endDate filter format, using default: {}", e.getMessage());
+                    }
+                }
+            }
+            
+            // Get all audit events in the date range
+            List<AuditEvent> events = auditRepository.findByEventTimestampBetween(startDate, endDate);
+            
+            // Group by correlation ID
+            Map<UUID, List<AuditEvent>> eventsByCorrelation = events.stream()
+                .filter(e -> e.getCorrelationId() != null)
+                .collect(java.util.stream.Collectors.groupingBy(AuditEvent::getCorrelationId));
+            
+            List<ReconciliationReport> reports = new java.util.ArrayList<>();
+            
+            for (UUID correlationId : eventsByCorrelation.keySet()) {
+                try {
+                    ReconciliationReport report = generateReconciliationReport(correlationId);
+                    
+                    // Apply filters
+                    if (matchesFilters(report, filters)) {
+                        reports.add(report);
+                    }
+                } catch (Exception e) {
+                    logger.warn("Failed to generate report for correlation ID: {}", correlationId, e);
+                }
+            }
+            
+            // Sort by pipeline start time (most recent first)
+            reports.sort((r1, r2) -> r2.getPipelineStartTime().compareTo(r1.getPipelineStartTime()));
+            
+            logger.info("Retrieved {} reconciliation reports with filters: {}", reports.size(), filters);
+            return reports;
+            
+        } catch (Exception e) {
+            logger.error("Failed to retrieve reconciliation reports with filters: {}", filters, e);
+            throw new AuditPersistenceException("Failed to retrieve reconciliation reports", e);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean validateDataIntegrity(UUID correlationId) {
+        logger.debug("Validating data integrity for correlation ID: {}", correlationId);
+        
+        if (correlationId == null) {
+            throw new IllegalArgumentException("Correlation ID cannot be null");
+        }
+        
+        try {
+            List<AuditEvent> events = auditRepository.findByCorrelationIdOrderByEventTimestamp(correlationId);
+            
+            if (events.isEmpty()) {
+                logger.warn("No audit events found for correlation ID: {}", correlationId);
+                return false;
+            }
+            
+            // Check for required checkpoint stages
+            Set<CheckpointStage> presentStages = events.stream()
+                .map(AuditEvent::getCheckpointStage)
+                .filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toSet());
+            
+            Set<CheckpointStage> requiredStages = Set.of(
+                CheckpointStage.RHEL_LANDING,
+                CheckpointStage.SQLLOADER_COMPLETE,
+                CheckpointStage.FILE_GENERATED
+            );
+            
+            if (!presentStages.containsAll(requiredStages)) {
+                logger.warn("Missing required checkpoint stages for correlation ID: {}", correlationId);
+                return false;
+            }
+            
+            // Check for excessive failures
+            long failureCount = events.stream()
+                .mapToLong(e -> e.getStatus() == AuditStatus.FAILURE ? 1 : 0)
+                .sum();
+            
+            if (failureCount > events.size() * 0.5) { // More than 50% failures
+                logger.warn("Excessive failures detected for correlation ID: {}", correlationId);
+                return false;
+            }
+            
+            // Check record count consistency
+            Map<String, Long> checkpointCounts = calculateCheckpointCounts(events);
+            if (!validateRecordCountConsistency(checkpointCounts)) {
+                logger.warn("Record count inconsistency detected for correlation ID: {}", correlationId);
+                return false;
+            }
+            
+            logger.info("Data integrity validation passed for correlation ID: {}", correlationId);
+            return true;
+            
+        } catch (Exception e) {
+            logger.error("Failed to validate data integrity for correlation ID: {}", correlationId, e);
+            throw new AuditPersistenceException("Failed to validate data integrity", e);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Long> getRecordCountsBySourceSystem(UUID correlationId) {
+        logger.debug("Getting record counts by source system for correlation ID: {}", correlationId);
+        
+        if (correlationId == null) {
+            throw new IllegalArgumentException("Correlation ID cannot be null");
+        }
+        
+        try {
+            List<AuditEvent> events = auditRepository.findByCorrelationIdOrderByEventTimestamp(correlationId);
+            
+            Map<String, Long> recordCounts = new java.util.HashMap<>();
+            
+            for (AuditEvent event : events) {
+                if (event.getSourceSystem() != null && event.getDetailsJson() != null) {
+                    try {
+                        AuditDetails details = objectMapper.readValue(event.getDetailsJson(), AuditDetails.class);
+                        Long recordCount = details.getRecordCount();
+                        if (recordCount != null) {
+                            recordCounts.merge(event.getSourceSystem(), recordCount, Long::sum);
+                        }
+                    } catch (Exception e) {
+                        logger.debug("Could not parse audit details for record count: {}", e.getMessage());
+                    }
+                }
+            }
+            
+            logger.info("Retrieved record counts by source system for correlation ID: {} - {}", 
+                correlationId, recordCounts);
+            
+            return recordCounts;
+            
+        } catch (Exception e) {
+            logger.error("Failed to get record counts by source system for correlation ID: {}", correlationId, e);
+            throw new AuditPersistenceException("Failed to get record counts by source system", e);
+        }
+    }
+
+    /**
+     * Helper method to calculate checkpoint counts from audit events
+     */
+    private Map<String, Long> calculateCheckpointCounts(List<AuditEvent> events) {
+        Map<String, Long> checkpointCounts = new java.util.HashMap<>();
+        
+        for (AuditEvent event : events) {
+            if (event.getCheckpointStage() != null && event.getDetailsJson() != null) {
+                try {
+                    AuditDetails details = objectMapper.readValue(event.getDetailsJson(), AuditDetails.class);
+                    Long recordCount = details.getRecordCount();
+                    if (recordCount != null) {
+                        String stage = event.getCheckpointStage().name();
+                        checkpointCounts.put(stage, checkpointCounts.getOrDefault(stage, 0L) + recordCount);
+                    }
+                } catch (Exception e) {
+                    logger.debug("Could not parse audit details for checkpoint count: {}", e.getMessage());
+                }
+            }
+        }
+        
+        return checkpointCounts;
+    }
+
+    /**
+     * Helper method to calculate control totals from audit events
+     */
+    private Map<String, Double> calculateControlTotals(List<AuditEvent> events) {
+        Map<String, Double> controlTotals = new java.util.HashMap<>();
+        
+        for (AuditEvent event : events) {
+            if (event.getCheckpointStage() != null && event.getDetailsJson() != null) {
+                try {
+                    AuditDetails details = objectMapper.readValue(event.getDetailsJson(), AuditDetails.class);
+                    if (details.getControlTotalDebits() != null) {
+                        String stage = event.getCheckpointStage().name();
+                        double currentTotal = controlTotals.getOrDefault(stage, 0.0);
+                        controlTotals.put(stage, currentTotal + details.getControlTotalDebits().doubleValue());
+                    }
+                } catch (Exception e) {
+                    logger.debug("Could not parse audit details for control total: {}", e.getMessage());
+                }
+            }
+        }
+        
+        return controlTotals;
+    }
+
+    /**
+     * Helper method to check for reconciliation-specific discrepancies
+     */
+    private List<DataDiscrepancy> checkReconciliationDiscrepancies(UUID correlationId, List<AuditEvent> events) {
+        List<DataDiscrepancy> discrepancies = new java.util.ArrayList<>();
+        
+        // Use existing discrepancy detection methods
+        discrepancies.addAll(checkMissingCheckpoints(correlationId, events));
+        discrepancies.addAll(checkRecordCountMismatches(correlationId, events));
+        discrepancies.addAll(checkProcessingTimeouts(correlationId, events));
+        discrepancies.addAll(checkExcessiveFailures(correlationId, events));
+        
+        return discrepancies;
+    }
+
+    /**
+     * Helper method to create reconciliation summary
+     */
+    private ReconciliationReport.ReconciliationSummary createReconciliationSummary(List<AuditEvent> events, 
+                                                                                   LocalDateTime startTime, 
+                                                                                   LocalDateTime endTime) {
+        long totalEvents = events.size();
+        long successfulEvents = events.stream().mapToLong(e -> e.getStatus() == AuditStatus.SUCCESS ? 1 : 0).sum();
+        long failedEvents = events.stream().mapToLong(e -> e.getStatus() == AuditStatus.FAILURE ? 1 : 0).sum();
+        long warningEvents = events.stream().mapToLong(e -> e.getStatus() == AuditStatus.WARNING ? 1 : 0).sum();
+        
+        double successRate = totalEvents > 0 ? (double) successfulEvents / totalEvents * 100.0 : 0.0;
+        
+        long processingTimeMs = java.time.temporal.ChronoUnit.MILLIS.between(startTime, endTime);
+        
+        // Calculate total records processed
+        Long totalRecordsProcessed = events.stream()
+            .filter(e -> e.getDetailsJson() != null)
+            .mapToLong(e -> {
+                try {
+                    AuditDetails details = objectMapper.readValue(e.getDetailsJson(), AuditDetails.class);
+                    return details.getRecordCount() != null ? details.getRecordCount() : 0L;
+                } catch (Exception ex) {
+                    return 0L;
+                }
+            })
+            .sum();
+        
+        boolean dataIntegrityValid = failedEvents == 0;
+        
+        return new ReconciliationReport.ReconciliationSummary(
+            totalRecordsProcessed, successfulEvents, failedEvents, warningEvents,
+            successRate, processingTimeMs, dataIntegrityValid
+        );
+    }
+
+    /**
+     * Helper method to create checkpoint details
+     */
+    private List<ReconciliationReport.CheckpointDetail> createCheckpointDetails(List<AuditEvent> events) {
+        Map<CheckpointStage, List<AuditEvent>> eventsByStage = events.stream()
+            .filter(e -> e.getCheckpointStage() != null)
+            .collect(java.util.stream.Collectors.groupingBy(AuditEvent::getCheckpointStage));
+        
+        List<ReconciliationReport.CheckpointDetail> checkpointDetails = new java.util.ArrayList<>();
+        
+        for (Map.Entry<CheckpointStage, List<AuditEvent>> entry : eventsByStage.entrySet()) {
+            CheckpointStage stage = entry.getKey();
+            List<AuditEvent> stageEvents = entry.getValue();
+            
+            // Calculate aggregated values for this stage
+            Long totalRecordCount = stageEvents.stream()
+                .filter(e -> e.getDetailsJson() != null)
+                .mapToLong(e -> {
+                    try {
+                        AuditDetails auditDetails = objectMapper.readValue(e.getDetailsJson(), AuditDetails.class);
+                        return auditDetails.getRecordCount() != null ? auditDetails.getRecordCount() : 0L;
+                    } catch (Exception ex) {
+                        return 0L;
+                    }
+                })
+                .sum();
+            
+            Double totalControlTotal = stageEvents.stream()
+                .filter(e -> e.getDetailsJson() != null)
+                .mapToDouble(e -> {
+                    try {
+                        AuditDetails auditDetails = objectMapper.readValue(e.getDetailsJson(), AuditDetails.class);
+                        return auditDetails.getControlTotalDebits() != null ? auditDetails.getControlTotalDebits().doubleValue() : 0.0;
+                    } catch (Exception ex) {
+                        return 0.0;
+                    }
+                })
+                .sum();
+            
+            // Determine overall status for this stage
+            boolean hasFailures = stageEvents.stream().anyMatch(e -> e.getStatus() == AuditStatus.FAILURE);
+            boolean hasWarnings = stageEvents.stream().anyMatch(e -> e.getStatus() == AuditStatus.WARNING);
+            String status = hasFailures ? "FAILURE" : (hasWarnings ? "WARNING" : "SUCCESS");
+            
+            // Get time range for this stage
+            LocalDateTime stageStartTime = stageEvents.stream()
+                .map(AuditEvent::getEventTimestamp)
+                .filter(java.util.Objects::nonNull)
+                .min(LocalDateTime::compareTo)
+                .orElse(null);
+            
+            LocalDateTime stageEndTime = stageEvents.stream()
+                .map(AuditEvent::getEventTimestamp)
+                .filter(java.util.Objects::nonNull)
+                .max(LocalDateTime::compareTo)
+                .orElse(null);
+            
+            Long durationMs = (stageStartTime != null && stageEndTime != null) ?
+                java.time.temporal.ChronoUnit.MILLIS.between(stageStartTime, stageEndTime) : null;
+            
+            ReconciliationReport.CheckpointDetail detail = new ReconciliationReport.CheckpointDetail(
+                stage.name(), totalRecordCount, totalControlTotal, status,
+                stageStartTime, stageEndTime, durationMs
+            );
+            
+            checkpointDetails.add(detail);
+        }
+        
+        // Sort by checkpoint stage order
+        checkpointDetails.sort((d1, d2) -> {
+            CheckpointStage stage1 = CheckpointStage.valueOf(d1.getCheckpointStage());
+            CheckpointStage stage2 = CheckpointStage.valueOf(d2.getCheckpointStage());
+            return stage1.compareTo(stage2);
+        });
+        
+        return checkpointDetails;
+    }
+
+    /**
+     * Helper method to check if a report matches the given filters
+     */
+    private boolean matchesFilters(ReconciliationReport report, Map<String, String> filters) {
+        if (filters == null || filters.isEmpty()) {
+            return true;
+        }
+        
+        // Source system filter
+        if (filters.containsKey("sourceSystem")) {
+            String filterValue = filters.get("sourceSystem");
+            if (filterValue != null && !filterValue.equals(report.getSourceSystem())) {
+                return false;
+            }
+        }
+        
+        // Status filter
+        if (filters.containsKey("status")) {
+            String filterValue = filters.get("status");
+            if (filterValue != null && !filterValue.equals(report.getOverallStatus())) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+
+    /**
+     * Helper method to validate record count consistency across checkpoints
+     */
+    private boolean validateRecordCountConsistency(Map<String, Long> checkpointCounts) {
+        if (checkpointCounts.isEmpty()) {
+            return true; // No data to validate
+        }
+        
+        // Get counts for key stages
+        Long inputCount = checkpointCounts.get(CheckpointStage.RHEL_LANDING.name());
+        Long loadedCount = checkpointCounts.get(CheckpointStage.SQLLOADER_COMPLETE.name());
+        Long outputCount = checkpointCounts.get(CheckpointStage.FILE_GENERATED.name());
+        
+        // Allow for some tolerance in record counts (e.g., 5% variance)
+        double tolerance = 0.05;
+        
+        if (inputCount != null && loadedCount != null) {
+            double variance = Math.abs(inputCount - loadedCount) / (double) Math.max(inputCount, loadedCount);
+            if (variance > tolerance) {
+                return false;
+            }
+        }
+        
+        if (loadedCount != null && outputCount != null) {
+            double variance = Math.abs(loadedCount - outputCount) / (double) Math.max(loadedCount, outputCount);
+            if (variance > tolerance) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ReconciliationReportDTO.StandardReconciliationReport generateStandardReconciliationReportDTO(UUID correlationId) {
+        logger.info("Generating standard reconciliation report DTO for correlation ID: {}", correlationId);
+        
+        if (correlationId == null) {
+            throw new IllegalArgumentException("Correlation ID cannot be null");
+        }
+        
+        try {
+            // Get audit events for the correlation ID
+            List<AuditEvent> auditEvents = auditRepository.findByCorrelationIdOrderByEventTimestamp(correlationId);
+            
+            if (auditEvents.isEmpty()) {
+                throw new IllegalArgumentException("No audit events found for correlation ID: " + correlationId);
+            }
+            
+            // Extract basic information
+            String sourceSystem = auditEvents.get(0).getSourceSystem();
+            LocalDateTime pipelineStartTime = auditEvents.stream()
+                .map(AuditEvent::getEventTimestamp)
+                .min(LocalDateTime::compareTo)
+                .orElse(LocalDateTime.now());
+            LocalDateTime pipelineEndTime = auditEvents.stream()
+                .map(AuditEvent::getEventTimestamp)
+                .max(LocalDateTime::compareTo)
+                .orElse(LocalDateTime.now());
+            
+            // Calculate checkpoint counts
+            Map<String, Long> checkpointCounts = calculateCheckpointCounts(auditEvents);
+            
+            // Calculate control totals
+            Map<String, Double> controlTotals = calculateControlTotals(auditEvents);
+            
+            // Count discrepancies
+            List<DataDiscrepancy> discrepancies = identifyDiscrepanciesForCorrelationId(correlationId);
+            int discrepancyCount = discrepancies.size();
+            
+            // Create basic summary
+            long successfulEvents = auditEvents.stream()
+                .mapToLong(event -> event.getStatus() == AuditStatus.SUCCESS ? 1 : 0)
+                .sum();
+            long failedEvents = auditEvents.stream()
+                .mapToLong(event -> event.getStatus() == AuditStatus.FAILURE ? 1 : 0)
+                .sum();
+            long warningEvents = auditEvents.stream()
+                .mapToLong(event -> event.getStatus() == AuditStatus.WARNING ? 1 : 0)
+                .sum();
+            double successRate = auditEvents.isEmpty() ? 0.0 : 
+                (double) successfulEvents / auditEvents.size() * 100.0;
+            
+            ReconciliationReportDTO.BasicSummary summary = new ReconciliationReportDTO.BasicSummary(
+                successfulEvents, failedEvents, warningEvents, successRate);
+            
+            // Determine overall status
+            ReconciliationReportDTO.ReportStatus overallStatus = determineOverallStatus(auditEvents, discrepancies);
+            
+            logger.info("Successfully generated standard reconciliation report DTO for correlation ID: {} - {} events, {} discrepancies", 
+                correlationId, auditEvents.size(), discrepancyCount);
+            
+            return new ReconciliationReportDTO.StandardReconciliationReport(
+                correlationId, sourceSystem, LocalDateTime.now(), overallStatus,
+                pipelineStartTime, pipelineEndTime, checkpointCounts, controlTotals,
+                discrepancyCount, summary);
+                
+        } catch (Exception e) {
+            logger.error("Error generating standard reconciliation report DTO for correlation ID: {}", correlationId, e);
+            throw new AuditPersistenceException("Failed to generate standard reconciliation report DTO", e);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ReconciliationReportDTO.DetailedReconciliationReport generateDetailedReconciliationReportDTO(UUID correlationId) {
+        logger.info("Generating detailed reconciliation report DTO for correlation ID: {}", correlationId);
+        
+        if (correlationId == null) {
+            throw new IllegalArgumentException("Correlation ID cannot be null");
+        }
+        
+        try {
+            // Get audit events for the correlation ID
+            List<AuditEvent> auditEvents = auditRepository.findByCorrelationIdOrderByEventTimestamp(correlationId);
+            
+            if (auditEvents.isEmpty()) {
+                throw new IllegalArgumentException("No audit events found for correlation ID: " + correlationId);
+            }
+            
+            // Extract basic information
+            String sourceSystem = auditEvents.get(0).getSourceSystem();
+            LocalDateTime pipelineStartTime = auditEvents.stream()
+                .map(AuditEvent::getEventTimestamp)
+                .min(LocalDateTime::compareTo)
+                .orElse(LocalDateTime.now());
+            LocalDateTime pipelineEndTime = auditEvents.stream()
+                .map(AuditEvent::getEventTimestamp)
+                .max(LocalDateTime::compareTo)
+                .orElse(LocalDateTime.now());
+            
+            // Calculate checkpoint counts and control totals
+            Map<String, Long> checkpointCounts = calculateCheckpointCounts(auditEvents);
+            Map<String, Double> controlTotals = calculateControlTotals(auditEvents);
+            
+            // Get all discrepancies
+            List<DataDiscrepancy> discrepancies = identifyDiscrepanciesForCorrelationId(correlationId);
+            
+            // Create detailed summary
+            long totalRecordsProcessed = checkpointCounts.values().stream()
+                .mapToLong(Long::longValue)
+                .max()
+                .orElse(0L);
+            long successfulEvents = auditEvents.stream()
+                .mapToLong(event -> event.getStatus() == AuditStatus.SUCCESS ? 1 : 0)
+                .sum();
+            long failedEvents = auditEvents.stream()
+                .mapToLong(event -> event.getStatus() == AuditStatus.FAILURE ? 1 : 0)
+                .sum();
+            long warningEvents = auditEvents.stream()
+                .mapToLong(event -> event.getStatus() == AuditStatus.WARNING ? 1 : 0)
+                .sum();
+            double successRate = auditEvents.isEmpty() ? 0.0 : 
+                (double) successfulEvents / auditEvents.size() * 100.0;
+            
+            long totalProcessingTimeMs = pipelineEndTime.toEpochSecond(java.time.ZoneOffset.UTC) * 1000 - 
+                pipelineStartTime.toEpochSecond(java.time.ZoneOffset.UTC) * 1000;
+            boolean dataIntegrityValid = validateDataIntegrity(correlationId);
+            double averageProcessingTimePerRecordMs = totalRecordsProcessed > 0 ? 
+                (double) totalProcessingTimeMs / totalRecordsProcessed : 0.0;
+            
+            ReconciliationReportDTO.DetailedSummary summary = new ReconciliationReportDTO.DetailedSummary(
+                totalRecordsProcessed, successfulEvents, failedEvents, warningEvents, successRate,
+                totalProcessingTimeMs, dataIntegrityValid, averageProcessingTimePerRecordMs);
+            
+            // Create checkpoint details
+            List<ReconciliationReportDTO.CheckpointDetail> checkpointDetails = createCheckpointDetailsDTO(auditEvents);
+            
+            // Create performance metrics
+            ReconciliationReportDTO.PerformanceMetrics performanceMetrics = createPerformanceMetrics(
+                auditEvents, totalProcessingTimeMs, totalRecordsProcessed);
+            
+            // Determine overall status
+            ReconciliationReportDTO.ReportStatus overallStatus = determineOverallStatus(auditEvents, discrepancies);
+            
+            logger.info("Successfully generated detailed reconciliation report DTO for correlation ID: {} - {} events, {} discrepancies", 
+                correlationId, auditEvents.size(), discrepancies.size());
+            
+            return new ReconciliationReportDTO.DetailedReconciliationReport(
+                correlationId, sourceSystem, LocalDateTime.now(), overallStatus,
+                pipelineStartTime, pipelineEndTime, checkpointCounts, controlTotals,
+                discrepancies, summary, checkpointDetails, performanceMetrics);
+                
+        } catch (Exception e) {
+            logger.error("Error generating detailed reconciliation report DTO for correlation ID: {}", correlationId, e);
+            throw new AuditPersistenceException("Failed to generate detailed reconciliation report DTO", e);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ReconciliationReportDTO.SummaryReconciliationReport generateSummaryReconciliationReportDTO(UUID correlationId) {
+        logger.info("Generating summary reconciliation report DTO for correlation ID: {}", correlationId);
+        
+        if (correlationId == null) {
+            throw new IllegalArgumentException("Correlation ID cannot be null");
+        }
+        
+        try {
+            // Get audit events for the correlation ID
+            List<AuditEvent> auditEvents = auditRepository.findByCorrelationIdOrderByEventTimestamp(correlationId);
+            
+            if (auditEvents.isEmpty()) {
+                throw new IllegalArgumentException("No audit events found for correlation ID: " + correlationId);
+            }
+            
+            // Extract basic information
+            String sourceSystem = auditEvents.get(0).getSourceSystem();
+            
+            // Calculate high-level metrics
+            LocalDateTime pipelineStartTime = auditEvents.stream()
+                .map(AuditEvent::getEventTimestamp)
+                .min(LocalDateTime::compareTo)
+                .orElse(LocalDateTime.now());
+            LocalDateTime pipelineEndTime = auditEvents.stream()
+                .map(AuditEvent::getEventTimestamp)
+                .max(LocalDateTime::compareTo)
+                .orElse(LocalDateTime.now());
+            
+            long totalProcessingTimeMs = pipelineEndTime.toEpochSecond(java.time.ZoneOffset.UTC) * 1000 - 
+                pipelineStartTime.toEpochSecond(java.time.ZoneOffset.UTC) * 1000;
+            
+            Map<String, Long> checkpointCounts = calculateCheckpointCounts(auditEvents);
+            long totalRecordsProcessed = checkpointCounts.values().stream()
+                .mapToLong(Long::longValue)
+                .max()
+                .orElse(0L);
+            
+            long successfulEvents = auditEvents.stream()
+                .mapToLong(event -> event.getStatus() == AuditStatus.SUCCESS ? 1 : 0)
+                .sum();
+            double successRate = auditEvents.isEmpty() ? 0.0 : 
+                (double) successfulEvents / auditEvents.size() * 100.0;
+            
+            boolean dataIntegrityValid = validateDataIntegrity(correlationId);
+            
+            // Count critical issues (failures and high-severity discrepancies)
+            long failedEvents = auditEvents.stream()
+                .mapToLong(event -> event.getStatus() == AuditStatus.FAILURE ? 1 : 0)
+                .sum();
+            List<DataDiscrepancy> discrepancies = identifyDiscrepanciesForCorrelationId(correlationId);
+            long criticalDiscrepancies = discrepancies.stream()
+                .mapToLong(d -> d.getSeverity() == DataDiscrepancy.DiscrepancySeverity.CRITICAL ? 1 : 0)
+                .sum();
+            int criticalIssuesCount = (int) (failedEvents + criticalDiscrepancies);
+            
+            // Determine overall status
+            ReconciliationReportDTO.ReportStatus overallStatus = determineOverallStatus(auditEvents, discrepancies);
+            
+            logger.info("Successfully generated summary reconciliation report DTO for correlation ID: {} - {} records, {}% success rate", 
+                correlationId, totalRecordsProcessed, String.format("%.1f", successRate));
+            
+            return new ReconciliationReportDTO.SummaryReconciliationReport(
+                correlationId, sourceSystem, LocalDateTime.now(), overallStatus,
+                totalProcessingTimeMs, totalRecordsProcessed, successRate,
+                dataIntegrityValid, criticalIssuesCount);
+                
+        } catch (Exception e) {
+            logger.error("Error generating summary reconciliation report DTO for correlation ID: {}", correlationId, e);
+            throw new AuditPersistenceException("Failed to generate summary reconciliation report DTO", e);
+        }
+    }
+
+    /**
+     * Helper method to determine overall status based on audit events and discrepancies.
+     */
+    private ReconciliationReportDTO.ReportStatus determineOverallStatus(List<AuditEvent> auditEvents, List<DataDiscrepancy> discrepancies) {
+        boolean hasFailures = auditEvents.stream().anyMatch(event -> event.getStatus() == AuditStatus.FAILURE);
+        boolean hasCriticalDiscrepancies = discrepancies.stream()
+            .anyMatch(d -> d.getSeverity() == DataDiscrepancy.DiscrepancySeverity.CRITICAL);
+        boolean hasWarnings = auditEvents.stream().anyMatch(event -> event.getStatus() == AuditStatus.WARNING);
+        boolean hasHighSeverityDiscrepancies = discrepancies.stream()
+            .anyMatch(d -> d.getSeverity() == DataDiscrepancy.DiscrepancySeverity.HIGH);
+        
+        if (hasFailures || hasCriticalDiscrepancies) {
+            return ReconciliationReportDTO.ReportStatus.FAILURE;
+        } else if (hasWarnings || hasHighSeverityDiscrepancies || !discrepancies.isEmpty()) {
+            return ReconciliationReportDTO.ReportStatus.WARNING;
+        } else {
+            return ReconciliationReportDTO.ReportStatus.SUCCESS;
+        }
+    }
+
+    /**
+     * Helper method to create checkpoint details for detailed reports.
+     */
+    private List<ReconciliationReportDTO.CheckpointDetail> createCheckpointDetailsDTO(List<AuditEvent> auditEvents) {
+        return auditEvents.stream()
+            .collect(java.util.stream.Collectors.groupingBy(
+                event -> event.getCheckpointStage().name(),
+                java.util.stream.Collectors.toList()))
+            .entrySet().stream()
+            .map(entry -> {
+                String checkpointStage = entry.getKey();
+                List<AuditEvent> stageEvents = entry.getValue();
+                
+                LocalDateTime startTime = stageEvents.stream()
+                    .map(AuditEvent::getEventTimestamp)
+                    .min(LocalDateTime::compareTo)
+                    .orElse(LocalDateTime.now());
+                LocalDateTime endTime = stageEvents.stream()
+                    .map(AuditEvent::getEventTimestamp)
+                    .max(LocalDateTime::compareTo)
+                    .orElse(LocalDateTime.now());
+                
+                long durationMs = endTime.toEpochSecond(java.time.ZoneOffset.UTC) * 1000 - 
+                    startTime.toEpochSecond(java.time.ZoneOffset.UTC) * 1000;
+                
+                // Extract record count and control total from audit details
+                long recordCount = extractRecordCountFromEvents(stageEvents);
+                double controlTotal = extractControlTotalFromEvents(stageEvents);
+                
+                String status = stageEvents.stream().anyMatch(e -> e.getStatus() == AuditStatus.FAILURE) ? 
+                    "FAILURE" : stageEvents.stream().anyMatch(e -> e.getStatus() == AuditStatus.WARNING) ? 
+                    "WARNING" : "SUCCESS";
+                
+                return new ReconciliationReportDTO.CheckpointDetail(
+                    checkpointStage, recordCount, controlTotal, status, startTime, endTime, durationMs);
+            })
+            .toList();
+    }
+
+    /**
+     * Helper method to create performance metrics for detailed reports.
+     */
+    private ReconciliationReportDTO.PerformanceMetrics createPerformanceMetrics(
+            List<AuditEvent> auditEvents, long totalProcessingTimeMs, long totalRecordsProcessed) {
+        
+        double recordsPerSecond = totalProcessingTimeMs > 0 ? 
+            (double) totalRecordsProcessed / (totalProcessingTimeMs / 1000.0) : 0.0;
+        
+        // Mock performance metrics (in a real implementation, these would come from monitoring systems)
+        double peakMemoryUsageMB = 512.0; // Mock value
+        double averageCpuUtilization = 75.0; // Mock value
+        int dbConnectionPoolPeakUsage = 8; // Mock value
+        long totalDbQueries = auditEvents.size() * 2L; // Estimate based on audit events
+        double averageDbQueryTimeMs = 15.0; // Mock value
+        
+        return new ReconciliationReportDTO.PerformanceMetrics(
+            recordsPerSecond, peakMemoryUsageMB, averageCpuUtilization,
+            dbConnectionPoolPeakUsage, totalDbQueries, averageDbQueryTimeMs);
+    }
+
+    /**
+     * Helper method to extract record count from audit events.
+     */
+    private long extractRecordCountFromEvents(List<AuditEvent> events) {
+        return events.stream()
+            .mapToLong(event -> {
+                try {
+                    if (event.getDetailsJson() != null) {
+                        AuditDetails details = objectMapper.readValue(event.getDetailsJson(), AuditDetails.class);
+                        return details.getRecordCount() != null ? details.getRecordCount() : 0L;
+                    }
+                } catch (JsonProcessingException e) {
+                    logger.warn("Failed to parse audit details JSON for record count: {}", e.getMessage());
+                }
+                return 0L;
+            })
+            .max()
+            .orElse(0L);
+    }
+
+    /**
+     * Helper method to extract control total from audit events.
+     */
+    private double extractControlTotalFromEvents(List<AuditEvent> events) {
+        return events.stream()
+            .mapToDouble(event -> {
+                try {
+                    if (event.getDetailsJson() != null) {
+                        AuditDetails details = objectMapper.readValue(event.getDetailsJson(), AuditDetails.class);
+                        return details.getControlTotalDebits() != null ? 
+                            details.getControlTotalDebits().doubleValue() : 0.0;
+                    }
+                } catch (JsonProcessingException e) {
+                    logger.warn("Failed to parse audit details JSON for control total: {}", e.getMessage());
+                }
+                return 0.0;
+            })
+            .max()
+            .orElse(0.0);
+    }
+
+    /**
+     * Helper method to identify discrepancies for a specific correlation ID.
+     */
+    private List<DataDiscrepancy> identifyDiscrepanciesForCorrelationId(UUID correlationId) {
+        Map<String, String> filters = Map.of("correlationId", correlationId.toString());
+        return identifyDataDiscrepancies(filters);
     }
 }

@@ -46,7 +46,7 @@ spring:
 # SpringDoc OpenAPI Configuration for Tests
 springdoc:
   api-docs:
-    enabled: false
+    enabled: true
   swagger-ui:
     enabled: false
 
@@ -63,6 +63,13 @@ audit:
   dashboard:
     page-size: 20
     max-export-records: 1000
+  # Security Configuration for Testing
+  security:
+    jwt:
+      jwk-set-uri: http://localhost:8080/.well-known/jwks.json
+      issuer: test-issuer
+    swagger:
+      enabled: false
 
 # Test-specific logging
 logging:

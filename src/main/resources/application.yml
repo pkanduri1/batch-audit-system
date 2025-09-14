@@ -12,24 +12,38 @@ spring:
     password: ${ORACLE_DB_PASSWORD:password}
     driver-class-name: oracle.jdbc.OracleDriver
     
-    # HikariCP Connection Pool Configuration
+    # HikariCP Connection Pool Configuration optimized for Oracle
     hikari:
-      pool-name: AuditHikariPool
+      pool-name: OracleAuditHikariPool
       maximum-pool-size: ${audit.database.connection-pool-size}
       minimum-idle: 5
       idle-timeout: 300000
       max-lifetime: 1800000
       connection-timeout: 20000
-      leak-detection-threshold: 60000
-      connection-test-query: SELECT 1 FROM DUAL
+      leak-detection-threshold: ${audit.oracle.connection.leak-detection-threshold}
+      validation-timeout: ${audit.oracle.connection.validation-timeout}
+      connection-test-query: ${audit.oracle.connection.connection-test-query}
       auto-commit: false
+      # Oracle-specific DataSource properties for performance
+      data-source-properties:
+        oracle.jdbc.ReadTimeout: 60000
+        oracle.net.CONNECT_TIMEOUT: 10000
+        oracle.jdbc.implicitStatementCacheSize: ${audit.oracle.performance.statement-cache-size}
+        oracle.jdbc.explicitStatementCacheSize: ${audit.oracle.performance.statement-cache-size}
+        oracle.jdbc.enableQueryResultCache: true
+        oracle.jdbc.queryResultCacheSize: 100
+        oracle.net.disableOob: true
+        oracle.jdbc.J2EE13Compliant: true
+        oracle.jdbc.timezoneAsRegion: false
+        user.timezone: UTC
       
-  # JdbcTemplate Configuration
+  # JdbcTemplate Configuration optimized for Oracle
   jdbc:
     template:
-      fetch-size: 100
+      fetch-size: ${audit.oracle.performance.fetch-size}
       max-rows: 0
-      query-timeout: 30
+      query-timeout: ${audit.oracle.performance.query-timeout}
+      results-map-case-insensitive: true
   
   # JPA Configuration
   jpa:
@@ -44,7 +58,12 @@ spring:
           time_zone: UTC
     show-sql: false
   
-  # Liquibase Configuration
+  # Transaction Management Configuration for Oracle
+  transaction:
+    default-timeout: 300
+    rollback-on-commit-failure: true
+    
+  # Liquibase Configuration optimized for Oracle
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
     enabled: true
@@ -54,6 +73,17 @@ spring:
     liquibase-schema: ${ORACLE_DB_USERNAME:cm3int}
     database-change-log-table: DATABASECHANGELOG
     database-change-log-lock-table: DATABASECHANGELOGLOCK
+    # Oracle-specific Liquibase parameters
+    parameters:
+      audit.table.tablespace: USERS
+      audit.index.tablespace: USERS
+      oracle.batch.size: 1000
+      schema.name: ${ORACLE_DB_USERNAME:cm3int}
+      audit.schema: ${ORACLE_DB_USERNAME:cm3int}
+      database.type: oracle
+      database.version: 19c
+      oracle.parallel.degree: 4
+      oracle.logging: NOLOGGING
 
 # Server Configuration
 server:
@@ -101,12 +131,67 @@ audit:
   dashboard:
     page-size: 50
     max-export-records: 10000
+  # Retry configuration for error handling
+  retry:
+    enabled: true
+    default:
+      max-attempts: 3
+      initial-delay: 1000
+      max-delay: 30000
+      multiplier: 2.0
+    database:
+      max-attempts: 5
+      initial-delay: 500
+      max-delay: 15000
+      multiplier: 1.5
+    quick:
+      max-attempts: 2
+      initial-delay: 100
+      max-delay: 1000
+      multiplier: 2.0
+  # Oracle-specific performance configuration
+  oracle:
+    performance:
+      batch-size: ${audit.database.batch-size}
+      fetch-size: ${audit.database.batch-size}
+      statement-cache-size: 25
+      parallel-degree: 4
+      query-timeout: 60
+    retry:
+      max-attempts: 3
+      initial-delay: 1000
+      max-delay: 10000
+      multiplier: 2.0
+    connection:
+      validation-timeout: 5000
+      leak-detection-threshold: 60000
+      connection-test-query: "SELECT 1 FROM DUAL"
+  # Security Configuration
+  security:
+    # JWT Configuration
+    jwt:
+      jwk-set-uri: ${JWT_JWK_SET_URI:}
+      issuer: ${JWT_ISSUER:}
+    # OAuth2 Configuration for Swagger UI
+    oauth2:
+      authorization-uri: ${OAUTH2_AUTHORIZATION_URI:http://localhost:8080/oauth2/authorize}
+      token-uri: ${OAUTH2_TOKEN_URI:http://localhost:8080/oauth2/token}
+      client-id: ${OAUTH2_CLIENT_ID:audit-system-client}
+    # CORS Configuration
+    cors:
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8080}
+    # Swagger Security
+    swagger:
+      enabled: ${SWAGGER_SECURITY_ENABLED:true}
+
+
 
 # Logging Configuration
 logging:
   level:
     com.company.audit: INFO
     org.springframework.jdbc: DEBUG
+    org.springframework.security: DEBUG
     liquibase: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"

@@ -4,11 +4,9 @@
   "description": "Monitors tasks.md file for task completion updates and automatically commits and pushes code changes to the batch audit system repository. ",
   "version": "1",
   "when": {
-    "type": "fileEdited",
+    "type": "userTriggered",
     "patterns": [
-      "tasks.md",
-      ".kiro/specs/*/tasks.md",
-      ".kiro/specs/batch-audit-system/tasks.md"
+      "tasks.md"
     ]
   },
   "then": {

@@ -4,6 +4,8 @@ import com.company.audit.model.AuditEvent;
 import com.company.audit.model.AuditDetails;
 import com.company.audit.model.dto.AuditStatistics;
 import com.company.audit.model.dto.DataDiscrepancy;
+import com.company.audit.model.dto.ReconciliationReport;
+import com.company.audit.model.dto.ReconciliationReportDTO;
 import com.company.audit.enums.AuditStatus;
 import com.company.audit.enums.CheckpointStage;
 
@@ -229,4 +231,81 @@ public interface AuditService {
      * @throws AuditPersistenceException if discrepancies cannot be retrieved from the database
      */
     List<DataDiscrepancy> getDataDiscrepancies(Map<String, String> filters);
+
+    /**
+     * Generates a comprehensive reconciliation report for a specific pipeline run.
+     * Analyzes all audit events for the correlation ID to verify data integrity,
+     * calculate record counts at each checkpoint, and identify discrepancies.
+     * 
+     * @param correlationId unique identifier for the pipeline run
+     * @return comprehensive reconciliation report with data integrity analysis
+     * @throws IllegalArgumentException if correlationId is null
+     * @throws AuditPersistenceException if the report cannot be generated due to database errors
+     */
+    ReconciliationReport generateReconciliationReport(UUID correlationId);
+
+    /**
+     * Retrieves all available reconciliation reports with optional filtering.
+     * Supports filtering by source system, date range, status, and other criteria.
+     * 
+     * @param filters optional filters for report retrieval (e.g., sourceSystem, startDate, endDate, status)
+     * @return list of reconciliation reports matching the specified filters
+     * @throws AuditPersistenceException if reports cannot be retrieved from the database
+     */
+    List<ReconciliationReport> getReconciliationReports(Map<String, String> filters);
+
+    /**
+     * Validates data integrity for a specific pipeline run by comparing record counts
+     * and control totals across all checkpoints.
+     * 
+     * @param correlationId unique identifier for the pipeline run
+     * @return true if data integrity validation passes, false otherwise
+     * @throws IllegalArgumentException if correlationId is null
+     * @throws AuditPersistenceException if validation cannot be performed due to database errors
+     */
+    boolean validateDataIntegrity(UUID correlationId);
+
+    /**
+     * Retrieves record counts by source system for a specific pipeline run.
+     * Used for reconciliation analysis and reporting.
+     * 
+     * @param correlationId unique identifier for the pipeline run
+     * @return map of source system identifiers to record counts
+     * @throws IllegalArgumentException if correlationId is null
+     * @throws AuditPersistenceException if counts cannot be retrieved from the database
+     */
+    Map<String, Long> getRecordCountsBySourceSystem(UUID correlationId);
+
+    /**
+     * Generates a standard reconciliation report DTO for a specific pipeline run.
+     * Provides essential information including checkpoint counts, control totals, and basic summary.
+     * 
+     * @param correlationId unique identifier for the pipeline run
+     * @return standard reconciliation report DTO with essential pipeline information
+     * @throws IllegalArgumentException if correlationId is null
+     * @throws AuditPersistenceException if the report cannot be generated due to database errors
+     */
+    ReconciliationReportDTO.StandardReconciliationReport generateStandardReconciliationReportDTO(UUID correlationId);
+
+    /**
+     * Generates a detailed reconciliation report DTO for a specific pipeline run.
+     * Provides comprehensive analysis including all discrepancies, checkpoint details, and performance metrics.
+     * 
+     * @param correlationId unique identifier for the pipeline run
+     * @return detailed reconciliation report DTO with comprehensive pipeline analysis
+     * @throws IllegalArgumentException if correlationId is null
+     * @throws AuditPersistenceException if the report cannot be generated due to database errors
+     */
+    ReconciliationReportDTO.DetailedReconciliationReport generateDetailedReconciliationReportDTO(UUID correlationId);
+
+    /**
+     * Generates a summary reconciliation report DTO for a specific pipeline run.
+     * Provides high-level metrics including processing time, success rate, and critical issues count.
+     * 
+     * @param correlationId unique identifier for the pipeline run
+     * @return summary reconciliation report DTO with high-level pipeline metrics
+     * @throws IllegalArgumentException if correlationId is null
+     * @throws AuditPersistenceException if the report cannot be generated due to database errors
+     */
+    ReconciliationReportDTO.SummaryReconciliationReport generateSummaryReconciliationReportDTO(UUID correlationId);
 }

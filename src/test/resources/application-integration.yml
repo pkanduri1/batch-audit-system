@@ -1,66 +1,113 @@
 spring:
-  application:
-    name: batch-audit-system-integration-test
+  profiles:
+    active: integration
   
-  # Oracle database configuration for integration testing
   datasource:
     url: jdbc:oracle:thin:@//localhost:1521/ORCLPDB1
-    username: ${ORACLE_TEST_USER:cm3int}
-    password: ${ORACLE_TEST_PASSWORD:cm3int}
+    username: cm3int
+    password: ${ORACLE_PASSWORD:cm3int}
     driver-class-name: oracle.jdbc.OracleDriver
-    
-    # HikariCP Connection Pool Configuration for Integration Tests
     hikari:
-      pool-name: IntegrationTestAuditHikariPool
       maximum-pool-size: 5
       minimum-idle: 2
-      idle-timeout: 300000
+      connection-timeout: 30000
+      idle-timeout: 600000
       max-lifetime: 1800000
-      connection-timeout: 10000
-      auto-commit: false
-  
-  # JdbcTemplate Configuration for Integration Tests
-  jdbc:
-    template:
-      fetch-size: 100
-      max-rows: 5000
-      query-timeout: 30
-  
-  # Enable Liquibase for integration tests with test context
+      leak-detection-threshold: 60000
+
   liquibase:
-    enabled: true
-    change-log: classpath:db/changelog/db.changelog-master.xml
-    contexts: test
+    change-log: classpath:db/changelog/test-changelog-master.xml
+    contexts: integration
     drop-first: false
-    default-schema: ${ORACLE_TEST_USER:cm3int}
+    enabled: true
+    default-schema: cm3int
 
-# SpringDoc OpenAPI Configuration for Integration Tests
-springdoc:
-  api-docs:
-    enabled: false
-  swagger-ui:
-    enabled: false
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.Oracle19cDialect
+        format_sql: true
+        show_sql: false
+    hibernate:
+      ddl-auto: none
 
-# Audit System Configuration for Integration Tests
+# Audit system configuration for integration tests
 audit:
   database:
-    batch-size: 100
+    table-prefix: Test_
+    batch-size: 50
     connection-pool-size: 5
   retention:
     days: 30
   reconciliation:
     auto-generate: false
-    schedule: "-"
+    schedule: "0 0 6 * * ?"
   dashboard:
-    page-size: 50
-    max-export-records: 5000
+    page-size: 20
+    max-export-records: 1000
 
-# Integration test specific logging
+# SpringDoc OpenAPI configuration for integration tests
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+    tryItOutEnabled: true
+    filter: true
+  group-configs:
+    - group: audit-system
+      paths-to-match: /api/audit/**
+      display-name: Audit System API
+
+# Logging configuration for integration tests
 logging:
   level:
     com.company.audit: DEBUG
     org.springframework.jdbc: DEBUG
     liquibase: INFO
-    oracle.jdbc: WARN
-    org.springframework: WARN
-    org.springframework.test: DEBUG
+    org.springdoc: DEBUG
+    org.springframework.web: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{correlationId}] %logger{36} - %msg%n"
+
+# Management endpoints for integration testing
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,liquibase
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      simple:
+        enabled: true
+
+# Security configuration for integration tests
+security:
+  oauth2:
+    resourceserver:
+      jwt:
+        issuer-uri: http://localhost:8080/auth/realms/audit-system
+        jwk-set-uri: http://localhost:8080/auth/realms/audit-system/protocol/openid-connect/certs
+  audit:
+    roles:
+      viewer: AUDIT_VIEWER
+      admin: AUDIT_ADMIN
+
+# Test-specific configuration
+test:
+  database:
+    cleanup-enabled: true
+    performance-test-records: 100
+  correlation-id:
+    thread-pool-size: 3
+    test-timeout-seconds: 10
+  swagger:
+    validation-enabled: true
+    documentation-check-enabled: true

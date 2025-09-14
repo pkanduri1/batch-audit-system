@@ -3,9 +3,12 @@ package com.company.audit.controller;
 import com.company.audit.enums.AuditStatus;
 import com.company.audit.enums.CheckpointStage;
 import com.company.audit.model.AuditEvent;
+import com.company.audit.model.dto.AuditEventDTO;
 import com.company.audit.model.dto.AuditStatistics;
 import com.company.audit.model.dto.DataDiscrepancy;
 import com.company.audit.model.dto.PagedResponse;
+import com.company.audit.model.dto.ReconciliationReport;
+import com.company.audit.model.dto.ReconciliationReportDTO;
 import com.company.audit.service.AuditService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -21,6 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * REST API controller for audit dashboard and reporting functionality.
@@ -92,7 +97,7 @@ public class AuditDashboardController {
             )
         )
     })
-    public ResponseEntity<PagedResponse<AuditEvent>> getAuditEvents(
+    public ResponseEntity<PagedResponse<AuditEventDTO>> getAuditEvents(
         @Parameter(
             description = "Filter by source system identifier (e.g., 'MAINFRAME_SYSTEM_A')",
             example = "MAINFRAME_SYSTEM_A",
@@ -155,15 +160,20 @@ public class AuditDashboardController {
             List<AuditEvent> auditEvents = auditService.getAuditEventsWithFilters(
                 sourceSystem, moduleName, status, checkpointStage, page, size);
             
+            // Convert to DTOs
+            List<AuditEventDTO> auditEventDTOs = auditEvents.stream()
+                .map(AuditEventDTO::fromEntity)
+                .toList();
+            
             // Get total count for pagination metadata
             long totalElements = auditService.countAuditEventsWithFilters(
                 sourceSystem, moduleName, status, checkpointStage);
             
             // Create paginated response
-            PagedResponse<AuditEvent> pagedResponse = PagedResponse.of(auditEvents, page, size, totalElements);
+            PagedResponse<AuditEventDTO> pagedResponse = PagedResponse.of(auditEventDTOs, page, size, totalElements);
             
             logger.info("Successfully retrieved {} audit events (page {}, size {}, total {})", 
-                auditEvents.size(), page, size, totalElements);
+                auditEventDTOs.size(), page, size, totalElements);
             
             return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
@@ -394,7 +404,324 @@ public class AuditDashboardController {
         }
     }
 
-    // TODO: Implement additional endpoints in subsequent tasks
-    // - GET /api/audit/reconciliation/{correlationId}
-    // - GET /api/audit/reconciliation/reports
+    /**
+     * Retrieves a comprehensive reconciliation report for a specific pipeline run.
+     * Analyzes all audit events for the correlation ID to verify data integrity,
+     * calculate record counts at each checkpoint, and identify discrepancies.
+     * 
+     * @param correlationId unique identifier for the pipeline run
+     * @return comprehensive reconciliation report with data integrity analysis
+     */
+    @GetMapping("/reconciliation/{correlationId}")
+    @Operation(
+        summary = "Get reconciliation report", 
+        description = "Retrieve a comprehensive reconciliation report for a specific pipeline run. " +
+                     "Analyzes all audit events for the correlation ID to verify data integrity, " +
+                     "calculate record counts at each checkpoint, identify discrepancies, and provide " +
+                     "end-to-end traceability from source files through Oracle loads to final output files. " +
+                     "Essential for compliance reporting and data integrity verification."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200", 
+            description = "Successfully retrieved reconciliation report",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema = @Schema(implementation = ReconciliationReport.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400", 
+            description = "Invalid correlation ID format or no audit events found for the specified correlation ID",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema = @Schema(implementation = String.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404", 
+            description = "No audit events found for the specified correlation ID",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema = @Schema(implementation = String.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500", 
+            description = "Internal server error while generating reconciliation report",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema = @Schema(implementation = String.class)
+            )
+        )
+    })
+    public ResponseEntity<ReconciliationReport> getReconciliationReport(
+        @Parameter(
+            description = "Unique correlation ID for the pipeline run (UUID format)",
+            example = "550e8400-e29b-41d4-a716-446655440000",
+            required = true,
+            schema = @Schema(type = "string", format = "uuid")
+        )
+        @PathVariable UUID correlationId
+    ) {
+        logger.info("GET /api/audit/reconciliation/{} - generating reconciliation report", correlationId);
+        
+        try {
+            // Validate correlation ID
+            if (correlationId == null) {
+                logger.warn("Correlation ID is null");
+                return ResponseEntity.badRequest().build();
+            }
+            
+            // Generate reconciliation report
+            ReconciliationReport report = auditService.generateReconciliationReport(correlationId);
+            
+            logger.info("Successfully generated reconciliation report for correlation ID: {} - {} events, {} discrepancies, status: {}", 
+                correlationId, 
+                report.getSummary() != null ? report.getSummary().getSuccessfulEvents() + report.getSummary().getFailedEvents() + report.getSummary().getWarningEvents() : 0,
+                report.getDiscrepancies() != null ? report.getDiscrepancies().size() : 0,
+                report.getOverallStatus());
+            
+            return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(report);
+                
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid correlation ID or no audit events found: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+            
+        } catch (Exception e) {
+            logger.error("Error generating reconciliation report for correlation ID: {}", correlationId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * Retrieves reconciliation report with specified detail level using new DTO structure.
+     * Supports different report types: STANDARD, DETAILED, and SUMMARY.
+     * 
+     * @param correlationId unique identifier for the pipeline run
+     * @param reportType type of report to generate (STANDARD, DETAILED, SUMMARY)
+     * @return reconciliation report DTO with requested detail level
+     */
+    @GetMapping("/reconciliation/{correlationId}/dto")
+    @Operation(
+        summary = "Get reconciliation report DTO", 
+        description = "Retrieve a reconciliation report using the new DTO structure with different detail levels. " +
+                     "Supports STANDARD (essential info), DETAILED (comprehensive analysis), and SUMMARY (high-level metrics) report types. " +
+                     "Uses Java 17+ sealed classes for type safety and improved API design."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200", 
+            description = "Successfully retrieved reconciliation report DTO",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema = @Schema(implementation = ReconciliationReportDTO.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400", 
+            description = "Invalid correlation ID format or report type",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema = @Schema(implementation = String.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404", 
+            description = "No audit events found for the specified correlation ID",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema = @Schema(implementation = String.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500", 
+            description = "Internal server error while generating reconciliation report",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema = @Schema(implementation = String.class)
+            )
+        )
+    })
+    public ResponseEntity<ReconciliationReportDTO> getReconciliationReportDTO(
+        @Parameter(
+            description = "Unique correlation ID for the pipeline run (UUID format)",
+            example = "550e8400-e29b-41d4-a716-446655440000",
+            required = true,
+            schema = @Schema(type = "string", format = "uuid")
+        )
+        @PathVariable UUID correlationId,
+        
+        @Parameter(
+            description = "Type of report to generate",
+            example = "STANDARD",
+            schema = @Schema(type = "string", allowableValues = {"STANDARD", "DETAILED", "SUMMARY"})
+        )
+        @RequestParam(defaultValue = "STANDARD") String reportType
+    ) {
+        logger.info("GET /api/audit/reconciliation/{}/dto - generating {} reconciliation report", 
+            correlationId, reportType);
+        
+        try {
+            // Validate correlation ID
+            if (correlationId == null) {
+                logger.warn("Correlation ID is null");
+                return ResponseEntity.badRequest().build();
+            }
+            
+            // Validate report type
+            if (!reportType.matches("^(STANDARD|DETAILED|SUMMARY)$")) {
+                logger.warn("Invalid report type: {}", reportType);
+                return ResponseEntity.badRequest().build();
+            }
+            
+            // Generate reconciliation report DTO based on type
+            ReconciliationReportDTO reportDTO = switch (reportType.toUpperCase()) {
+                case "STANDARD" -> auditService.generateStandardReconciliationReportDTO(correlationId);
+                case "DETAILED" -> auditService.generateDetailedReconciliationReportDTO(correlationId);
+                case "SUMMARY" -> auditService.generateSummaryReconciliationReportDTO(correlationId);
+                default -> throw new IllegalArgumentException("Unsupported report type: " + reportType);
+            };
+            
+            logger.info("Successfully generated {} reconciliation report DTO for correlation ID: {} - status: {}", 
+                reportType, correlationId, reportDTO.getOverallStatus());
+            
+            return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(reportDTO);
+                
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid correlation ID or no audit events found: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+            
+        } catch (Exception e) {
+            logger.error("Error generating {} reconciliation report DTO for correlation ID: {}", 
+                reportType, correlationId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * Retrieves all available reconciliation reports with optional filtering.
+     * Supports filtering by source system, date range, status, and other criteria.
+     * Results are paginated and ordered by pipeline start time (most recent first).
+     * 
+     * @param filters optional filters for report retrieval
+     * @return list of reconciliation reports matching the specified filters
+     */
+    @GetMapping("/reconciliation/reports")
+    @Operation(
+        summary = "Get reconciliation reports", 
+        description = "Retrieve all available reconciliation reports with optional filtering. " +
+                     "Supports filtering by source system, date range, overall status, and other criteria. " +
+                     "Results are ordered by pipeline start time (most recent first) and can be used for " +
+                     "compliance reporting, trend analysis, and operational monitoring. " +
+                     "Each report provides a comprehensive view of data integrity for a complete pipeline run."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200", 
+            description = "Successfully retrieved reconciliation reports",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema = @Schema(implementation = ReconciliationReport.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400", 
+            description = "Invalid filter parameters (invalid date format, unknown status values, etc.)",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema = @Schema(implementation = String.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500", 
+            description = "Internal server error while retrieving reconciliation reports",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema = @Schema(implementation = String.class)
+            )
+        )
+    })
+    public ResponseEntity<List<ReconciliationReport>> getReconciliationReports(
+        @Parameter(
+            description = "Optional filters for report retrieval. " +
+                         "Supported filters: sourceSystem (e.g., 'MAINFRAME_SYSTEM_A'), " +
+                         "status (SUCCESS/FAILURE/WARNING), " +
+                         "startDate (ISO 8601 format, e.g., '2024-01-01T00:00:00'), " +
+                         "endDate (ISO 8601 format, e.g., '2024-01-31T23:59:59'). " +
+                         "Default date range is last 30 days if not specified.",
+            example = "sourceSystem=MAINFRAME_SYSTEM_A&status=SUCCESS&startDate=2024-01-01T00:00:00&endDate=2024-01-31T23:59:59",
+            schema = @Schema(type = "object")
+        )
+        @RequestParam Map<String, String> filters
+    ) {
+        logger.info("GET /api/audit/reconciliation/reports - filters: {}", filters);
+        
+        try {
+            // Validate filter parameters
+            if (filters.containsKey("status")) {
+                String status = filters.get("status");
+                if (status != null && !status.matches("^(SUCCESS|FAILURE|WARNING)$")) {
+                    logger.warn("Invalid status filter value: {}", status);
+                    return ResponseEntity.badRequest().build();
+                }
+            }
+            
+            // Validate date filters
+            if (filters.containsKey("startDate")) {
+                try {
+                    LocalDateTime.parse(filters.get("startDate"));
+                } catch (Exception e) {
+                    logger.warn("Invalid startDate filter format: {}", filters.get("startDate"));
+                    return ResponseEntity.badRequest().build();
+                }
+            }
+            
+            if (filters.containsKey("endDate")) {
+                try {
+                    LocalDateTime.parse(filters.get("endDate"));
+                } catch (Exception e) {
+                    logger.warn("Invalid endDate filter format: {}", filters.get("endDate"));
+                    return ResponseEntity.badRequest().build();
+                }
+            }
+            
+            // Validate date range consistency
+            if (filters.containsKey("startDate") && filters.containsKey("endDate")) {
+                try {
+                    LocalDateTime startDate = LocalDateTime.parse(filters.get("startDate"));
+                    LocalDateTime endDate = LocalDateTime.parse(filters.get("endDate"));
+                    if (startDate.isAfter(endDate)) {
+                        logger.warn("Start date {} is after end date {}", startDate, endDate);
+                        return ResponseEntity.badRequest().build();
+                    }
+                } catch (Exception e) {
+                    logger.warn("Error validating date range: {}", e.getMessage());
+                    return ResponseEntity.badRequest().build();
+                }
+            }
+            
+            // Retrieve reconciliation reports
+            List<ReconciliationReport> reports = auditService.getReconciliationReports(filters);
+            
+            logger.info("Successfully retrieved {} reconciliation reports with filters: {}", 
+                reports.size(), filters);
+            
+            return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(reports);
+                
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid parameters for reconciliation reports request: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+            
+        } catch (Exception e) {
+            logger.error("Error retrieving reconciliation reports with filters: {}", filters, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 }

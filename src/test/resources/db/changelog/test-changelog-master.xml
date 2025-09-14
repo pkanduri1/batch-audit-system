@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog-ext
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+    <!-- 
+    Test-specific master changelog file for Oracle Integration Tests
+    
+    This changelog is used specifically for integration testing with Oracle database.
+    It includes test-specific contexts and configurations optimized for testing scenarios.
+    -->
+
+    <!-- Include test-specific changelog files -->
+    <include file="db/changelog/test-001-create-test-audit-table.xml"/>
+    <include file="db/changelog/test-002-create-test-audit-indexes.xml"/>
+
+</databaseChangeLog>

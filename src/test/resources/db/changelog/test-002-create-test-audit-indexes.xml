@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="test-002-create-test-audit-indexes" author="audit-system-test" context="integration,test">
+        <comment>Create Oracle-optimized indexes for Test_PIPELINE_AUDIT_LOG table with Test_ prefix for performance testing</comment>
+        
+        <!-- Correlation ID index for fast correlation-based queries -->
+        <createIndex indexName="Test_IDX_CORRELATION_ID" 
+                     tableName="Test_PIPELINE_AUDIT_LOG" 
+                     tablespace="USERS">
+            <column name="CORRELATION_ID"/>
+        </createIndex>
+        
+        <!-- Composite index for source system and checkpoint stage queries -->
+        <createIndex indexName="Test_IDX_SOURCE_SYSTEM_STAGE" 
+                     tableName="Test_PIPELINE_AUDIT_LOG" 
+                     tablespace="USERS">
+            <column name="SOURCE_SYSTEM"/>
+            <column name="CHECKPOINT_STAGE"/>
+        </createIndex>
+        
+        <!-- Timestamp index for date range queries (descending for recent-first ordering) -->
+        <createIndex indexName="Test_IDX_EVENT_TIMESTAMP" 
+                     tableName="Test_PIPELINE_AUDIT_LOG" 
+                     tablespace="USERS">
+            <column name="EVENT_TIMESTAMP" descending="true"/>
+        </createIndex>
+        
+        <!-- Composite index for module name and status queries -->
+        <createIndex indexName="Test_IDX_MODULE_STATUS" 
+                     tableName="Test_PIPELINE_AUDIT_LOG" 
+                     tablespace="USERS">
+            <column name="MODULE_NAME"/>
+            <column name="STATUS"/>
+        </createIndex>
+        
+        <!-- Composite index for correlation ID and status for statistics queries -->
+        <createIndex indexName="Test_IDX_CORRELATION_STATUS" 
+                     tableName="Test_PIPELINE_AUDIT_LOG" 
+                     tablespace="USERS">
+            <column name="CORRELATION_ID"/>
+            <column name="STATUS"/>
+        </createIndex>
+        
+        <!-- Add Oracle-specific index hints for performance testing -->
+        <sql>
+            -- Gather statistics for the test table to optimize query plans
+            BEGIN
+                DBMS_STATS.GATHER_TABLE_STATS(
+                    ownname => USER,
+                    tabname => 'Test_PIPELINE_AUDIT_LOG',
+                    estimate_percent => DBMS_STATS.AUTO_SAMPLE_SIZE,
+                    method_opt => 'FOR ALL COLUMNS SIZE AUTO',
+                    cascade => TRUE
+                );
+            END;
+        </sql>
+        
+    </changeSet>
+
+</databaseChangeLog>
