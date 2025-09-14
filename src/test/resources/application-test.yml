@@ -39,9 +39,12 @@ spring:
           time_zone: UTC
     show-sql: true
   
-  # Disable Liquibase for unit tests
+  # Enable Liquibase for integration tests
   liquibase:
-    enabled: false
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    contexts: test
+    drop-first: false
 
 # SpringDoc OpenAPI Configuration for Tests
 springdoc:

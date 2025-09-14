@@ -1,0 +1,24 @@
+{
+  "enabled": true,
+  "name": "Comprehensive Test Suite Runner",
+  "description": "Monitors all source and test files and triggers a complete test execution including unit tests, integration tests, and Oracle database setup with Liquibase migrations for test tables",
+  "version": "1",
+  "when": {
+    "type": "userTriggered",
+    "patterns": [
+      "src/**/*.java",
+      "src/**/*.xml",
+      "src/**/*.yml",
+      "src/**/*.properties",
+      "src/test/**/*.java",
+      "src/test/**/*.xml",
+      "src/test/**/*.yml",
+      "src/test/**/*.properties",
+      "pom.xml"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Source or test files have been modified. Execute the comprehensive test suite including:\n\n1. Run all unit tests: `mvn test`\n2. Execute Liquibase migrations for test environment with test_ prefixed tables in Oracle: `mvn liquibase:update -Dspring.profiles.active=test`\n3. Run all integration tests including Oracle database tests: `mvn verify -Dspring.profiles.active=integration`\n4. Execute comprehensive database integration tests that validate audit functionality end-to-end\n5. Analyze any test failures and provide specific fixes for:\n   - Unit test failures in service, repository, controller, or model layers\n   - Integration test failures related to Oracle connectivity or data persistence\n   - Liquibase migration issues with test table creation\n   - Configuration problems in test profiles\n6. If tests fail, implement the necessary code changes to resolve issues and re-run the test suite\n7. Ensure all tests pass before completing the task\n\nFocus on maintaining the audit system's data integrity, Oracle database integration, and comprehensive test coverage across all layers of the Spring Boot application."
+  }
+}

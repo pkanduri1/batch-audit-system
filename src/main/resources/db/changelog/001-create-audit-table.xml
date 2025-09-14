@@ -67,6 +67,10 @@
                 <constraints nullable="true"/>
             </column>
         </createTable>
+    </changeSet>
+
+    <changeSet id="001-add-audit-constraints" author="audit-system">
+        <comment>Add check constraints for enum values</comment>
         
         <!-- Add constraints for enum values -->
         <addCheckConstraint tableName="PIPELINE_AUDIT_LOG" 
@@ -76,6 +80,10 @@
         <addCheckConstraint tableName="PIPELINE_AUDIT_LOG" 
                            constraintName="CHK_CHECKPOINT_STAGE"
                            checkCondition="CHECKPOINT_STAGE IN ('RHEL_LANDING', 'SQLLOADER_START', 'SQLLOADER_COMPLETE', 'LOGIC_APPLIED', 'FILE_GENERATED')"/>
+    </changeSet>
+
+    <changeSet id="001-add-table-comments" author="audit-system">
+        <comment>Add table and column comments for documentation</comment>
         
         <!-- Add comments for documentation -->
         <setTableRemarks tableName="PIPELINE_AUDIT_LOG" 
@@ -104,7 +112,6 @@
         
         <setColumnRemarks tableName="PIPELINE_AUDIT_LOG" columnName="DETAILS_JSON" 
                          remarks="JSON metadata including file info, record counts, and business rule details"/>
-        
     </changeSet>
 
 </databaseChangeLog>

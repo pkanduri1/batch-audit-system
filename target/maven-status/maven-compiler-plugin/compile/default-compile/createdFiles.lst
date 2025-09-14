@@ -36,7 +36,6 @@ com/company/audit/model/dto/AuditEventDTO$AuditEventDTOBuilder.class
 com/company/audit/repository/AuditRepository.class
 com/company/audit/exception/AuditCorrelationException.class
 com/company/audit/config/LiquibaseConfig.class
-com/company/audit/service/AuditServiceImpl$1.class
 com/company/audit/model/AuditEvent.class
 com/company/audit/controller/AuditDashboardController.class
 com/company/audit/exception/AuditRetryException.class

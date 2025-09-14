@@ -4,7 +4,7 @@
   "description": "Automatically triggers parallel agent workflows when any code or configuration files are modified to ensure tasks are distributed across multiple agents and subagents for optimal efficiency",
   "version": "1",
   "when": {
-    "type": "fileEdited",
+    "type": "userTriggered",
     "patterns": [
       "src/**/*.java",
       "src/**/*.yml",
